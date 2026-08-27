@@ -1,0 +1,30 @@
+{
+  "agent": {
+    "default": "openai-codex/gpt-5.6-sol",
+    "defaultThinking": "low",
+    "defaultMaxTurns": 256,
+    "systemPromptMode": "inherit",
+    "includeContextFiles": true,
+    "loadSkillsImplicitly": false,
+    "loadExtensionsImplicitly": false,
+    "outputTranscript": false,
+    "Explore": "openai-codex/gpt-5.6-sol",
+    "analyst-opus": "anthropic/claude-opus-5",
+    "worker-luna": "openai-codex/gpt-5.6-luna",
+    "worker-muse": "meta/muse-spark-1.2-contributor",
+    "worker-deepseek": "deepseek/deepseek-v4-flash-vision-exp",
+    "analyst-kimi": "opencode-go/kimi-k3",
+    "analyst-qwen": "opencode-go/qwen3.8-max",
+    "analyst-glm": "opencode-go/glm-5.3"
+  },
+  "concurrency": {
+    "default": 2,
+    "providers": {
+      "openai-codex": 2,
+      "meta": 2,
+      "deepseek": 2,
+      "opencode-go": 1
+    },
+    "models": {}
+  }
+}

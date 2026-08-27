@@ -1,0 +1,15 @@
+# Local pi session/task state — never publish
+.pi/tasks/
+.pi/sessions/
+.pi-lens/
+
+# Credentials, in case anything is ever copied in by accident
+auth.json
+*.key
+*.pem
+.env
+.env.*
+
+# Local-only overrides
+*.local
+*.local.*
