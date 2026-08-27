@@ -167,10 +167,40 @@ audit it on a clock.
   anything touching fragile or shared files: check at the ~5 minute end. Bulk
   generation (docs, decks, test suites): ~10 minutes is acceptable for the first
   look. The supervisor — you — makes this call per dispatch.
-- **Wake yourself deliberately.** Use whatever timer or scheduled wake-up the
-  harness provides; if none is available, structure your own work so a natural
-  pause lands inside the window. The worker's completion notification is a
-  terminal report, not a substitute for mid-flight audits.
+- **Every dispatch has wake + timeout.** A delegated task must notify the
+  foreground on completion and be bounded by a timeout:
+  - `Agent` + `run_in_background: true`: the wake is built in — a
+    `subagent-result` message with `triggerTurn` starts a follow-up turn.
+    The timeout is the session-wide watchdog (`toolTimeoutMinutes` /
+    `idleTimeoutMinutes`); verify those thresholds before dispatch — there
+    is no per-dispatch timeout.
+  - `bg_run`: `notifyOnCompletion` / `triggerOnCompletion` default true (the
+    wake); set `timeoutSeconds` per task, because absent means no timeout.
+  - `bg_delegate`: same wake defaults, `timeoutSeconds` defaults to 1200,
+    optional `autoDeliver` for the answer to arrive in the wake itself.
+- **Never sleep or poll to wait** for a delegated task. Bare `sleep N; echo
+  ready` loops in the tool loop are forbidden in this scenario — the
+  completion notification is the wake-up path, and the harness systems
+  prompt says so. A deliberate one-off `AgentStatus` / `bg_status`
+  inspection is allowed, tight polling is not. The worker's completion
+  notification is a terminal report, not a substitute for mid-flight audits.
+- **Audit timer: one `bg_run` sleep — the sanctioned exception.** To wake
+  yourself on the 5–10 minute cadence, launch ONE background timer right
+  after dispatching:
+  `bg_run({ name: "audit workers", command: "sleep 300" /* or 600 */,
+  isAgent: false, timeoutSeconds: 700 })` — `triggerOnCompletion` defaults
+  true, so the timer's completion wakes a follow-up turn to do the audit.
+  That wake is an audit return, not waiting: run the three questions
+  (files touched? progress toward VERIFY? output shape?), then end the turn
+  again, re-arming the timer if the work is still running. Kill it
+  (`bg_kill`) once the workers settle or you cancel the audit. Never use a
+  timer to wait for the worker's own completion — that arrives as its own
+  notification, and the timer must not be re-framed as one.
+- **Foreground work while a worker runs is a separate, allowed scenario.** The
+  bans above are about waiting for / handing off the delegate, not about
+  keeping busy. The foreground stays alive and, if the current task keeps it
+  busy, it does the task; it just never sleeps to wait and never hands itself
+  to the worker.
 - **An audit is three questions, three minutes:** Is it touching only the files
   named in the brief? Is there forward progress toward VERIFY? Does the output
   shape match the spec? Read its log or diff-so-far; do not do a full review.
@@ -224,5 +254,13 @@ a worker's description along as verified fact.
 - **Delegating a one-liner.** Overhead exceeds the work.
 - **Fire-and-forget dispatch.** Backgrounding a worker and going quiet until it
   reports done. Workers drift; audit every 5–10 minutes.
+- **Sleep-to-wait.** Bare `sleep 180; echo ready` (or any poll loop) while a
+  delegated task runs. The completion notification is the wake; sleeping is
+  redundant and forbidden. The one sanctioned exception is a `bg_run` audit
+  timer — see "Audit running workers"; never use it to wait for worker
+  completion.
+- **Soaking the foreground into a worker.** Handing the live session (or the
+  delegated task's reasoning) off to the sub-agent and becoming a relay. The
+  foreground stays the analyst; workers only produce artifacts.
 - **Foreground merge.** Folding the live session into a sub-agent. The user
   loses their interlocutor and the workers lose their supervisor in one move.

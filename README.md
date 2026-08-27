@@ -32,10 +32,11 @@ If you'd rather do it by hand, the mapping is the whole spec:
 
 ```text
 agents/            7 sub-agent role definitions -> ~/.pi/agent/agents/
-skills/            3 skills                     -> ~/.pi/agent/skills/
+skills/            3 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        1 local pi extension         -> ~/.pi/agent/extensions/
 config/
-  settings.json      MERGED into ~/.pi/agent/settings.json
+  AGENTS.md           copied to ~/.pi/agent/AGENTS.md
+  settings.json       MERGED into ~/.pi/agent/settings.json
   subagents-lite.json copied to ~/.pi/agent/subagents-lite.json
 ```
 
@@ -127,6 +128,16 @@ Two guardrails matter more than they look:
 - **Visual judgment is never delegated.** Workers that accept images routinely describe what the code *should* have drawn instead of what the pixels show. They capture the screenshot; you look at it.
 
 Full reasoning is in `skills/economy-team/SKILL.md`.
+
+### Global agent policy
+
+`config/AGENTS.md` supplies the setup-wide model and worker-selection policy. Its
+**Elite Team Mode** keeps the foreground analyst in charge while the user is
+present: quality outranks quota savings, judgment and verification remain with
+the session analyst, difficult bulk work may escalate to a primary-tier model,
+and every delegated task must have a completion wake-up and bounded timeout.
+The `economy-team` skill still governs routine bulk-output delegation underneath
+those interactive-session overrides.
 
 ---
 
