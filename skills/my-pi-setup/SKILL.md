@@ -26,14 +26,19 @@ and never assume a clone exists at all.
 
 ## Reaching upstream
 
-1. If the current directory is inside a clone of this repo and it is clean, use
-   it. Confirm by the remote URL, not the directory name.
-2. Otherwise clone into a fresh temp directory and work there. Never create a
+1. Use the canonical SSH remote for every Git operation:
+   `git@github.com:favrei/pi-agent-setups.git`. Clone, fetch, and push over SSH;
+   never silently substitute HTTPS or open an HTTPS credential flow.
+2. If the current directory is inside a clone of this repo and it is clean, use
+   it. Confirm by the remote URL, not the directory name, and restore the
+   canonical SSH URL before fetching.
+3. Otherwise clone into a fresh temp directory and work there. Never create a
    clone inside the user's project.
-3. Always fetch first and work from current `origin/main`. Never act on a working
+4. Always fetch first and work from current `origin/main`. Never act on a working
    copy of unknown age.
-4. If the remote is unreachable, stop and say so. Do not fall back to a stale
-   local copy and do not guess what the repo contains.
+5. If SSH authentication or the remote is unavailable, stop and say so. Do not
+   log in, switch transports, fall back to a stale local copy, or guess what the
+   repo contains.
 
 ## How the repo maps onto a machine
 
