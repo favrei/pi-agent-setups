@@ -56,7 +56,7 @@ Declared in `settings.json` under `packages[]`. All published to the public npm 
 | Package | Publisher (npm maintainer) | What it gives you |
 | --- | --- | --- |
 | `pi-meta-oauth` | `blockedredemption` | Meta Model API OAuth provider + Muse video/audio/file analysis tools |
-| `pi-goal` | `miclivs` | Persistent autonomous goals — `/goal`, `create_goal` |
+| `@narumitw/pi-goal` | `narumitw` | Actively maintained autonomous goals with guarded continuation, explicit completion/blocker/wait states, and safety limits |
 | `pi-subagents-lite` | `alexparamonov` | Sub-agents with isolated sessions and per-role models — the `Agent` tool |
 | `pi-background-tasks` | `ismailsaleekh` | `bg_run`, `bg_delegate`, attested Pi runs, and the `fusion_*` multi-model workflows |
 | `pi-claude-auth` | `pankajudhas81` | Reuses existing Claude Code credentials — no separate login |

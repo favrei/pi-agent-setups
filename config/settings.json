@@ -9,7 +9,7 @@
   ],
   "packages": [
     "npm:pi-meta-oauth@0.3.0",
-    "npm:pi-goal@0.1.7",
+    "npm:@narumitw/pi-goal@0.54.3",
     "npm:pi-subagents-lite",
     "npm:pi-background-tasks@2.4.2",
     "npm:pi-claude-auth@0.1.3",
