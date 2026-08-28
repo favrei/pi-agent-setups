@@ -51,7 +51,13 @@ directory of the same name; files under `config/` install at the root of
 <repo>/skills/…      ->  a skills root, see below
 <repo>/extensions/…  ->  ~/.pi/agent/extensions/…
 <repo>/config/X      ->  ~/.pi/agent/X
+<repo>/pi/X          ->  ~/.pi/X
 ```
+
+`pi/` is the one directory that installs *outside* `~/.pi/agent/`. It mirrors
+`~/.pi/` itself, for tools that keep config a level above the agent directory —
+`pi/web-search.json` is read by `pi-web-access` at `~/.pi/web-search.json` and
+is ignored if it lands in `~/.pi/agent/`. Do not collapse `pi/` into `config/`.
 
 Derive the mapping from what the repo actually contains at the time you run, not
 from a memorised list. New directories may appear; apply the same rule to them.

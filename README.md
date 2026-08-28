@@ -38,7 +38,11 @@ config/
   AGENTS.md           copied to ~/.pi/agent/AGENTS.md
   settings.json       MERGED into ~/.pi/agent/settings.json
   subagents-lite.json copied to ~/.pi/agent/subagents-lite.json
+pi/
+  web-search.json     copied to ~/.pi/web-search.json
 ```
+
+Note the two distinct roots. `config/` installs into `~/.pi/agent/`; `pi/` installs one level up into `~/.pi/`, which is where `pi-web-access` reads its own config from. Putting `web-search.json` under `config/` would land it in `~/.pi/agent/`, where the extension never looks — it would appear installed and silently do nothing.
 
 **After install, you still have to do these yourself — the installer deliberately won't:**
 
@@ -62,10 +66,34 @@ Declared in `settings.json` under `packages[]`. All published to the public npm 
 | `pi-background-tasks` | `ismailsaleekh` | `bg_run`, `bg_delegate`, attested Pi runs, and the `fusion_*` multi-model workflows |
 | `pi-claude-auth` | `pankajudhas81` | Reuses existing Claude Code credentials — no separate login |
 | `pi-lens` | `apmantza` | LSP diagnostics, ast-grep, symbol/module/project reports |
-| `pi-web-access` | `nicobailon` | `web_search`, `fetch_content`, GitHub/PDF/YouTube handling |
+| `pi-web-access` | `nicobailon` | `web_search`, `fetch_content`, GitHub/PDF/YouTube handling — routed Codex-first, see [Search routing](#search-routing) |
+| `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
 | `pi-mcp-adapter` | `nicobailon` | MCP gateway (`mcp`) and batch scripting (`mcpScript`) |
 
-All MIT except `pi-background-tasks` (ISC). None are first-party to pi itself — this is a community stack, so pin versions if you care about reproducibility, and read the diff before bumping anything that touches auth.
+All MIT except `pi-background-tasks` (ISC). None are first-party to pi itself — this is a community stack.
+
+**Nothing is version-pinned.** Every entry in `packages[]` is a bare name, so a fresh install takes the current release and an existing one is free to move. The earlier pins were snapshots of whatever happened to be installed the day they were written, and they rotted — `pi-meta-oauth` sat at `0.3.0` while upstream shipped `0.4.4`, which is a stale auth extension rather than a conservative one. Reproducibility here is not worth a standing manual upgrade chore across machines. If you need a build frozen, pin it locally in `~/.pi/agent/settings.json`; that stays out of this repo.
+
+### Search routing
+
+`pi/web-search.json` pins `web_search` to an explicit provider order instead of leaving it on the extension's automatic chain:
+
+```json
+{
+  "searchRouting": {
+    "providers": ["openai", "exa"],
+    "fallbackOn": ["transient", "quota", "network", "invalid-response", "unsupported"]
+  }
+}
+```
+
+OpenAI search here means **Codex-backed**: `pi-web-access` resolves credentials from Pi's own model providers in the order `["openai-codex", "openai"]`, so an existing Codex subscription is reused and no separate API key is configured. Exa is the keyless fallback, and it is reached only on the listed typed failures — not on a genuine empty result, which stays a real answer.
+
+Left unconfigured, the automatic chain prefers Exa *unless* the active model happens to be `openai-codex`, which makes search quality depend on which model you are currently driving. Pinning the order removes that coupling.
+
+This file contains no credentials — only provider names and failure classes — which is why it is safe to ship here while `auth.json` never is.
+
+`pi-codex-search` is the second, independent Codex search path. It registers its own `codex_search` tool rather than replacing `web_search`, so the two coexist: `web_search` gives you the routed multi-provider chain with the curator UI, `codex_search` goes straight to the Codex Responses API and can batch up to 32 queries in one call. Both reuse the same `openai-codex` OAuth credential, so neither needs an API key. Its optional `codex_standalone_web` tool (open/find/click/screenshot) is off unless enabled. Config, if you want to change defaults, is `~/.pi/pi-codex-search.json` — the same `~/.pi/` root as `web-search.json`, not `~/.pi/agent/`. Nothing is shipped here, since the defaults are fine.
 
 ### Local extension
 
@@ -181,7 +209,7 @@ Private skills live in `~/.agents/skills/` and are simply never copied here. Kee
 
 ## Maintenance
 
-- **`pi-meta-oauth` is behind**: pinned at `0.3.0`, upstream is at `0.4.4`. Verify the OAuth flow before bumping, since it touches provider auth.
+- **Extensions are unpinned by design.** See [pi extensions](#pi-extensions-npm-packages). An install takes current releases; verify provider auth still works after any bump that touches it.
 - **Model IDs rot.** Providers rename and retire models on short notice. When a role stops spawning, check `subagents-lite.json` against the live model list first — that's almost always the cause. Removing a retired model means editing three places: the model store entry, the `subagents-lite.json` mapping, and any skill prose that names it.
 - **One role is pinned to an experimental model.** `worker-deepseek` uses a vendor `-exp` model ID, which buys image support at the same price as the text-only variant but can be renamed or withdrawn without notice. It is the first thing to suspect when that worker stops spawning, and the non-`exp` variant of the same model is a drop-in fallback. Verified working when pinned; "experimental" is a stability claim, not a quality one.
 - **Sub-agent extensions are opt-in.** Every role sets `extensions: false` except `worker-muse`, which needs `[meta]` for the Muse tools. Left on by default, sub-agents load the full extension stack and get slow and expensive for no benefit.

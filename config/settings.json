@@ -8,13 +8,14 @@
     "anthropic/claude-opus-5:high"
   ],
   "packages": [
-    "npm:pi-meta-oauth@0.3.0",
-    "npm:@narumitw/pi-goal@0.54.3",
+    "npm:pi-meta-oauth",
+    "npm:@narumitw/pi-goal",
     "npm:pi-subagents-lite",
-    "npm:pi-background-tasks@2.4.2",
-    "npm:pi-claude-auth@0.1.3",
+    "npm:pi-background-tasks",
+    "npm:pi-claude-auth",
     "npm:pi-lens",
     "npm:pi-web-access",
+    "npm:pi-codex-search",
     "npm:pi-mcp-adapter"
   ]
 }
