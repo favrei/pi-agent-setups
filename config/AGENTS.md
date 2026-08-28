@@ -39,10 +39,9 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   never delegates a judgment call.
 - **Same-model escalation.** When bulk output genuinely needs elite-class
   judgment, dispatch a sub-agent on the session model or another primary-tier
-  model (`openai-codex/gpt-5.6-sol`, `anthropic/claude-opus-5`,
-  `opencode-go/ox-alpha-free`) via the sub-agent tool's `model` override,
-  instead of forcing economy-tier workers. Use it for hard implementation or
-  review lanes, not routine typing.
+  model (`openai-codex/gpt-5.6-sol`, `anthropic/claude-opus-5`) via the
+  sub-agent tool's `model` override, instead of forcing economy-tier workers.
+  Use it for hard implementation or review lanes, not routine typing.
 - **Analyst discussion.** For a named disagreement, a high-risk call, or an
   independent review where family diversity is the point, spawn another
   analyst: `analyst-opus` for elite second opinion, `analyst-qwen` /
