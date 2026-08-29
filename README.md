@@ -54,9 +54,9 @@ Note the two distinct roots. `config/` installs into `~/.pi/agent/`; `pi/` insta
 
 ## What's in the box
 
-### pi extensions (npm packages)
+### pi extensions
 
-Declared in `settings.json` under `packages[]`. All published to the public npm registry.
+Declared in `settings.json` under `packages[]`. All but one are published to the public npm registry.
 
 | Package | Publisher (npm maintainer) | What it gives you |
 | --- | --- | --- |
@@ -69,10 +69,15 @@ Declared in `settings.json` under `packages[]`. All published to the public npm 
 | `pi-web-access` | `nicobailon` | `web_search`, `fetch_content`, GitHub/PDF/YouTube handling — routed Codex-first, see [Search routing](#search-routing) |
 | `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
 | `pi-mcp-adapter` | `nicobailon` | MCP gateway (`mcp`) and batch scripting (`mcpScript`) |
+| `pi-ssh` | `HCAHOI` (GitHub) | `ssh_*` tools and `/ssh` — read, edit, grep, and run commands on an already-authorized remote over one reused connection; `ssh_process` for long jobs, `ssh_push`/`ssh_pull`, `ssh_tunnel`, `ssh_secret_write` |
 
 All MIT except `pi-background-tasks` (ISC). None are first-party to pi itself — this is a community stack.
 
-**Nothing is version-pinned.** Every entry in `packages[]` is a bare name, so a fresh install takes the current release and an existing one is free to move. The earlier pins were snapshots of whatever happened to be installed the day they were written, and they rotted — `pi-meta-oauth` sat at `0.3.0` while upstream shipped `0.4.4`, which is a stale auth extension rather than a conservative one. Reproducibility here is not worth a standing manual upgrade chore across machines. If you need a build frozen, pin it locally in `~/.pi/agent/settings.json`; that stays out of this repo.
+**Nothing is version-pinned, with one exception.** Every npm entry in `packages[]` is a bare name, so a fresh install takes the current release and an existing one is free to move. The earlier pins were snapshots of whatever happened to be installed the day they were written, and they rotted — `pi-meta-oauth` sat at `0.3.0` while upstream shipped `0.4.4`, which is a stale auth extension rather than a conservative one. Reproducibility here is not worth a standing manual upgrade chore across machines. If you need a build frozen, pin it locally in `~/.pi/agent/settings.json`; that stays out of this repo.
+
+The exception is `pi-ssh`, which is installed from Git rather than npm and is therefore pinned to an explicit commit SHA. A Git source has no release channel to be current on — a bare `git:` entry tracks a moving branch, which means arbitrary upstream code executing in your agent on the next install. Pin it, review before bumping it.
+
+One install caveat, because it will look like a broken install rather than a known one: `pi-ssh`'s committed `package-lock.json` embeds its author's absolute paths, so npm produces dangling `node_modules` symlinks for `@earendil-works/pi-coding-agent`, `@earendil-works/pi-tui`, and `typebox`. Delete those three links after install or upgrade and re-point them at the paths under your own pi installation. Nothing in this repo automates it.
 
 ### Search routing
 
@@ -209,7 +214,7 @@ Private skills live in `~/.agents/skills/` and are simply never copied here. Kee
 
 ## Maintenance
 
-- **Extensions are unpinned by design.** See [pi extensions](#pi-extensions-npm-packages). An install takes current releases; verify provider auth still works after any bump that touches it.
+- **npm extensions are unpinned by design; the Git one is not.** See [pi extensions](#pi-extensions). An install takes current npm releases; verify provider auth still works after any bump that touches it. `pi-ssh` stays on a reviewed commit SHA, and bumping it means re-pointing its `node_modules` symlinks again.
 - **Model IDs rot.** Providers rename and retire models on short notice. When a role stops spawning, check `subagents-lite.json` against the live model list first — that's almost always the cause. Removing a retired model means editing three places: the model store entry, the `subagents-lite.json` mapping, and any skill prose that names it.
 - **One role is pinned to an experimental model.** `worker-deepseek` uses a vendor `-exp` model ID, which buys image support at the same price as the text-only variant but can be renamed or withdrawn without notice. It is the first thing to suspect when that worker stops spawning, and the non-`exp` variant of the same model is a drop-in fallback. Verified working when pinned; "experimental" is a stability claim, not a quality one.
 - **Sub-agent extensions are opt-in.** Every role sets `extensions: false` except `worker-muse`, which needs `[meta]` for the Muse tools. Left on by default, sub-agents load the full extension stack and get slow and expensive for no benefit.

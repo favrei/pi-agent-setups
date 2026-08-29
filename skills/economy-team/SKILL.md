@@ -101,6 +101,31 @@ not a worker, and it is never merged into one.
      only if you remain resident and responsive; a delegated foreground cannot
      audit anyone.
 
+## One scheduler per job
+
+A background process and a sub-agent are not two interchangeable ways to express
+the same job. Keep one owner and one result channel:
+
+- Spawn implementation and review workers only with `Agent`. For asynchronous
+  work, set `run_in_background: true` on the `Agent` call itself. The parent then
+  receives the real `subagent-result` and lifecycle events.
+- Use `bg_run` only for non-agent shell processes: tests, builds, servers,
+  training, watchers, and the audit timer below. In this setup it always has
+  `isAgent: false`.
+- Never use `bash` or `bg_run` to launch `pi -p`, `pi --print`, `pi --mode json`,
+  another LLM CLI/API, or a wrapper that launches one. This creates a
+  shell-spawned pseudo-agent whose output is merely a process log; it bypasses
+  the parent/sub-agent result protocol.
+- Use `bg_delegate` only for inspect-only, context-seeded investigation and
+  retrieve its verified answer with `bg_result`. It does not replace an
+  implementation worker.
+- Use Fusion only for its named fixed-purpose workflows. Use
+  `bg_run_pi_attested` only when the user explicitly asks for an attested Pi run;
+  it is evidence production, not a delegation fallback.
+
+Never put one scheduler inside another. Background execution is an option on the
+`Agent` call, not a reason to wrap an agent in `bg_run`.
+
 ## Delegate or do it yourself
 
 Delegate when **any** of these is true:
@@ -153,8 +178,8 @@ Rules:
 - Ask for evidence, not for a narrative. Their narrative costs you input tokens
   and can be wrong.
 - One worker per file set. Never point two workers at the same files.
-- Long jobs: `run_in_background: true`, then keep doing your own reading instead
-  of waiting.
+- Long sub-agent jobs: call `Agent` with `run_in_background: true`, then keep
+  doing your own reading instead of waiting.
 
 ## Audit running workers — every 5–10 minutes
 
@@ -167,17 +192,17 @@ audit it on a clock.
   anything touching fragile or shared files: check at the ~5 minute end. Bulk
   generation (docs, decks, test suites): ~10 minutes is acceptable for the first
   look. The supervisor — you — makes this call per dispatch.
-- **Every dispatch has wake + timeout.** A delegated task must notify the
+- **Every dispatch has wake + timeout.** Delegated work must notify the
   foreground on completion and be bounded by a timeout:
   - `Agent` + `run_in_background: true`: the wake is built in — a
     `subagent-result` message with `triggerTurn` starts a follow-up turn.
     The timeout is the session-wide watchdog (`toolTimeoutMinutes` /
     `idleTimeoutMinutes`); verify those thresholds before dispatch — there
     is no per-dispatch timeout.
-  - `bg_run`: `notifyOnCompletion` / `triggerOnCompletion` default true (the
-    wake); set `timeoutSeconds` per task, because absent means no timeout.
-  - `bg_delegate`: same wake defaults, `timeoutSeconds` defaults to 1200,
-    optional `autoDeliver` for the answer to arrive in the wake itself.
+  - `bg_delegate`: wake defaults are on, `timeoutSeconds` defaults to 1200,
+    and optional `autoDeliver` can include the answer in the wake.
+  - A non-agent `bg_run` shell job is not delegated work. It separately needs
+    `timeoutSeconds` because no timeout is applied when that field is absent.
 - **Never sleep or poll to wait** for a delegated task. Bare `sleep N; echo
   ready` loops in the tool loop are forbidden in this scenario — the
   completion notification is the wake-up path, and the harness systems
@@ -254,6 +279,10 @@ a worker's description along as verified fact.
 - **Delegating a one-liner.** Overhead exceeds the work.
 - **Fire-and-forget dispatch.** Backgrounding a worker and going quiet until it
   reports done. Workers drift; audit every 5–10 minutes.
+- **Shell-spawned pseudo-agent.** Running a one-off `pi` or another LLM through
+  `bash`/`bg_run` instead of calling `Agent`. The process may finish, but the
+  parent does not receive the real sub-agent result or lifecycle. Never stack
+  background-task scheduling around sub-agent scheduling.
 - **Sleep-to-wait.** Bare `sleep 180; echo ready` (or any poll loop) while a
   delegated task runs. The completion notification is the wake; sleeping is
   redundant and forbidden. The one sanctioned exception is a `bg_run` audit

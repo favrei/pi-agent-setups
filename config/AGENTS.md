@@ -28,6 +28,27 @@
   review diversity, or an explicit user choice may override the random draw.
   If the selected worker is unavailable, use another eligible worker.
 
+## One Scheduler Per Job
+
+Background execution and sub-agent delegation are separate mechanisms. Never
+stack them to create a second agent path.
+
+- Use the `Agent` tool for implementation or review sub-agents. When it should
+  run asynchronously, set `run_in_background: true` on that same `Agent` call so
+  its terminal result returns through the sub-agent protocol.
+- Use `bg_delegate` only for its intended inspect-only, context-seeded
+  investigation, then retrieve the verified result with `bg_result`.
+- Use Fusion tools only for their named fixed-purpose workflows.
+- Use `bg_run` only for non-agent shell processes such as tests, builds, servers,
+  training jobs, and audit timers. In this setup, always set `isAgent: false`.
+- Never launch `pi -p`, `pi --print`, `pi --mode json`, another LLM CLI/API, or
+  a wrapper script that launches one through `bash` or `bg_run`. That is a
+  shell-spawned pseudo-agent: the parent receives a process log instead of the
+  real sub-agent result and lifecycle.
+- `bg_run_pi_attested` is the sole exception, and only when the user explicitly
+  requests an attested evidence-producing Pi run. It is not a delegation
+  fallback.
+
 ## Elite Team Mode (user present)
 
 When the user is actively in the session, quality and responsiveness outrank
@@ -48,20 +69,21 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   `analyst-kimi` for cross-family diversity. Name the disagreement in the
   brief. `analyst-glm` is text-only and never gets visual work. "More eyes"
   alone is not a reason.
-- **Responsive by default.** Every dispatch sets the background flag; long
-  shell calls get timeouts. Poll artifacts (diffs, timestamps), never status.
-  Kill wrong-direction workers early and re-brief with the loophole closed.
-- **Delegation contract: end notification + timeout.** Every task delegated
-  to a background task or sub-agent must wake the foreground on completion
-  and be bounded by a timeout. For `bg_run` / `bg_run_pi_attested`:
-  `timeoutSeconds` (absent on `bg_run` means no timeout, so set it). For
-  `bg_delegate`: wake defaults are on and `timeoutSeconds` defaults to 1200.
-  For `Agent` + `run_in_background: true`: the wake is built in
+- **Responsive by default.** Sub-agents use `Agent` with
+  `run_in_background: true`; long shell calls use `bg_run` with a timeout and
+  `isAgent: false`. Poll artifacts (diffs, timestamps), never status. Kill
+  wrong-direction workers early and re-brief with the loophole closed.
+- **Delegation contract: end notification + timeout.** Every sub-agent or
+  delegate must wake the foreground on completion and be bounded by a timeout.
+  For `bg_delegate`, wake defaults are on and `timeoutSeconds` defaults to 1200.
+  For `Agent` + `run_in_background: true`, the wake is built in
   (`subagent-result` + `triggerTurn`), but the only timeout is the session
   watchdog (`toolTimeoutMinutes` / `idleTimeoutMinutes`) — confirm those
-  thresholds before dispatching; there is no per-dispatch timeout.
+  thresholds before dispatching; there is no per-dispatch timeout. Non-agent
+  `bg_run` shell jobs separately require `timeoutSeconds` because absent means
+  no timeout.
 - **No sleeping, no soaking — in the delegated scenario.** When a task has
-  been handed to the background or a sub-agent, the foreground agent must
+  been handed to a sub-agent or delegate, the foreground agent must
   never run `sleep N; echo ready` or any poll loop to wait for it, and must
   never delegate/merge/background the foreground conversation itself into
   the sub-agent. The completion notification is the wake-up path; do
