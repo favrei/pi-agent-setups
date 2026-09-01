@@ -23,12 +23,31 @@ Do **not** quote specific prices in your reasoning or to the user. The rates mov
 and this skill does not track them. The rule is directional and holds regardless:
 analyst output is the expensive resource, worker output is the cheap one.
 
+## Two objectives, not one
+
+Cost is the first objective. **Wall-clock time is the second, and it is not
+optional.** A session that saves tokens and takes twice as long has failed: the
+user sits there for the whole difference. If economy-team is slower than solo,
+it is not economical, it is just slow.
+
+These two objectives collide in exactly one place: you have dispatched a worker
+and have nothing of your own to do. The answer is never "wait more cheaply." The
+answer is that the split was wrong — you handed over work you should have kept.
+
+The operational form of this rule:
+
+> **After every dispatch, you are still busy.** If your next action after
+> dispatching is to arm an audit timer and end the turn, treat that as a bug in
+> the split, not as the normal rhythm.
+
 ## Roles
 
 **Analyst — the session model, and any `analyst-*` sub-agent**
 
 - Audit: read the code, find the real problem, name the constraint.
 - Plan: decide the design, the file layout, the acceptance test.
+- Run the loop: test → read failure → patch → re-test. This is yours, not a
+  worker's. See "Split the work into two lanes".
 - Push progress: dispatch, unblock, re-brief, decide when it's done.
 - Visual inspection: look at the image/render/plot yourself. This is yours.
 - Final integration and any high-risk or irreversible call.
@@ -67,10 +86,14 @@ never hand it a visual task.
 
 ### Workers — any of them
 
-`worker-muse`, `worker-deepseek`, `worker-luna`. Treat them as interchangeable for
-routine implementation and take the lucky draw: rotate rather than always
-reaching for the same one. Different families fail differently, and spreading the
-work surfaces that instead of hiding it.
+`worker-muse`, `worker-deepseek`, `worker-luna`, `worker-glm`. Treat them as
+interchangeable for routine implementation and take the lucky draw: rotate rather
+than always reaching for the same one. Different families fail differently, and
+spreading the work surfaces that instead of hiding it.
+
+`worker-glm` is a worker. `analyst-glm` is an escalation-only analyst. They are
+different models on the same family name — never treat a `worker-glm` dispatch as
+an analyst spawn, or reach for `analyst-glm` because you wanted the cheap one.
 
 Two hard filters before the draw:
 
@@ -80,6 +103,11 @@ Two hard filters before the draw:
 2. **Availability.** Read `~/.pi/agent/AGENTS.md` before dispatching — it carries
    the current provider blocks (quota exhausted, auth broken) and the rotation
    policy. That file wins over anything here.
+3. **Provider concurrency.** Two agents on the same provider can queue behind
+   each other instead of running in parallel. `opencode-go` in particular allows
+   one at a time, so `worker-glm` and any `analyst-*` on that provider contend.
+   When you are deliberately running lanes in parallel, spread them across
+   providers.
 
 Filter first, then draw. Never randomize across a worker that can't do the job.
 
@@ -126,6 +154,53 @@ the same job. Keep one owner and one result channel:
 Never put one scheduler inside another. Background execution is an option on the
 `Agent` call, not a reason to wrap an agent in `bg_run`.
 
+## Split the work into two lanes
+
+Most real tasks are not one job. They are a **bulk-emission** job and an
+**agentic loop** job welded together:
+
+- **Emission** — type the 300-line module, write the README, expand the test
+  matrix, convert the config, do the same rename across twelve files.
+  Predictable, long to type, checkable at the end.
+- **Loop** — run it, read the failure, patch, re-run, check the diagnostic, try
+  the other flag, re-run. Small edits, many turns, a judgment call at every step.
+
+Separate them *before* you dispatch anything.
+
+**Emission goes to a worker.** That is the entire point of this skill.
+
+**The loop stays with you.** Not because a worker cannot run commands, but
+because a loop is a chain of decisions: a cheap model that takes the wrong branch
+at step 2 will spend twenty minutes confidently building on it, and the kill +
+re-brief + re-verify costs more than running the loop yourself would have. A loop
+you estimate at more than ~5 minutes is emphatically yours — length is exactly
+what makes drift expensive.
+
+**Then run both lanes at once.** Dispatch the emission worker with `Agent` +
+`run_in_background: true`, and immediately start your own loop in the same turn.
+Dispatching is not a stopping point; it is a fork. Parallel is the default shape
+of this skill, and audit comes later, at your own breakpoints.
+
+If the two lanes touch the same files, they are not parallel — sequence them, or
+carve the file boundary so they are. One worker per file set still holds.
+
+### The ten-second self-test
+
+Run this once, before dispatching:
+
+1. **How long is the whole job if I just do it, solo?** Under ~5 minutes → do it
+   solo. No brief, no dispatch, no audit. Delegation overhead is brief + audit +
+   verify + one likely correction round; that exceeds a 5-minute job every time.
+2. **What is the emission part?** More than ~30 lines of predictable text → that
+   is the worker lane. If there is no such chunk, there is no worker lane; stop
+   hunting for one and do the task.
+3. **What am I doing while the worker types?** Name it out loud before you
+   dispatch. If the honest answer is "nothing" or "auditing", you have
+   over-delegated: pull the loop, the integration, or the verification design
+   back into your own hands and start it now.
+
+Question 3 is the one that was failing. It is not optional.
+
 ## Delegate or do it yourself
 
 Delegate when **any** of these is true:
@@ -141,6 +216,8 @@ Do it yourself when **any** of these is true:
   cost more than the edit.
 - The needed context is subtle and lives in this conversation — if restating it
   accurately takes longer than doing the work, do the work.
+- It's an iterate-until-green loop: run, diagnose, patch, re-run.
+- The whole job is under ~5 minutes of your own work.
 - It's a security-, data-, or money-sensitive line.
 - You've already sent it back twice. Third round is yours; stop the ping-pong.
 
@@ -178,8 +255,9 @@ Rules:
 - Ask for evidence, not for a narrative. Their narrative costs you input tokens
   and can be wrong.
 - One worker per file set. Never point two workers at the same files.
-- Long sub-agent jobs: call `Agent` with `run_in_background: true`, then keep
-  doing your own reading instead of waiting.
+- Long sub-agent jobs: call `Agent` with `run_in_background: true`, then start
+  your own lane in the same turn — the loop, the integration, the next file set.
+  Not reading-while-waiting: working.
 
 ## Audit running workers — every 5–10 minutes
 
@@ -209,23 +287,30 @@ audit it on a clock.
   prompt says so. A deliberate one-off `AgentStatus` / `bg_status`
   inspection is allowed, tight polling is not. The worker's completion
   notification is a terminal report, not a substitute for mid-flight audits.
-- **Audit timer: one `bg_run` sleep — the sanctioned exception.** To wake
-  yourself on the 5–10 minute cadence, launch ONE background timer right
-  after dispatching:
+- **Default: audit at breakpoints in your own lane — no timer.** You are
+  running the loop while the worker types, so you already come up for air
+  regularly: a test run finishes, a file is done, you are about to switch
+  context. Audit there, roughly on the 5–10 minute cadence. This costs zero
+  extra wall clock and needs no scheduling machinery.
+- **The `bg_run` sleep timer is the fallback, not the rhythm.** Arm one only
+  when you genuinely have no lane of your own — the task was pure emission and
+  nothing is left for you to run:
   `bg_run({ name: "audit workers", command: "sleep 300" /* or 600 */,
   isAgent: false, timeoutSeconds: 700 })` — `triggerOnCompletion` defaults
   true, so the timer's completion wakes a follow-up turn to do the audit.
-  That wake is an audit return, not waiting: run the three questions
-  (files touched? progress toward VERIFY? output shape?), then end the turn
-  again, re-arming the timer if the work is still running. Kill it
-  (`bg_kill`) once the workers settle or you cancel the audit. Never use a
-  timer to wait for the worker's own completion — that arrives as its own
-  notification, and the timer must not be re-framed as one.
-- **Foreground work while a worker runs is a separate, allowed scenario.** The
-  bans above are about waiting for / handing off the delegate, not about
-  keeping busy. The foreground stays alive and, if the current task keeps it
-  busy, it does the task; it just never sleeps to wait and never hands itself
-  to the worker.
+  Reaching for this timer is a signal worth re-reading: nine times out of ten
+  it means you gave away the loop and should take some of it back instead of
+  scheduling a nap. When you do arm it, the wake is an audit return, not
+  waiting: run the three questions (files touched? progress toward VERIFY?
+  output shape?), then end the turn again, re-arming only if the work is still
+  running. Kill it (`bg_kill`) once the workers settle. Never use a timer to
+  wait for the worker's own completion — that arrives as its own notification,
+  and the timer must not be re-framed as one.
+- **Foreground work while a worker runs is the expected state, not an
+  exception.** The bans above are about waiting for / handing off the
+  delegate, not about keeping busy. The foreground stays alive and works its
+  own lane the entire time a worker runs; it just never sleeps to wait and
+  never hands itself to the worker.
 - **An audit is three questions, three minutes:** Is it touching only the files
   named in the brief? Is there forward progress toward VERIFY? Does the output
   shape match the spec? Read its log or diff-so-far; do not do a full review.
@@ -279,6 +364,15 @@ a worker's description along as verified fact.
 - **Delegating a one-liner.** Overhead exceeds the work.
 - **Fire-and-forget dispatch.** Backgrounding a worker and going quiet until it
   reports done. Workers drift; audit every 5–10 minutes.
+- **Dispatch-and-idle.** The mirror-image failure: you delegate, arm an audit
+  timer, and end the turn with nothing of your own running. You are now a very
+  expensive cron job. The user waits the full worker runtime for output that a
+  parallel lane could have overlapped.
+- **Delegating the loop.** Handing test → diagnose → patch → re-test to a cheap
+  model. It is a chain of judgment calls, which is the one thing workers are
+  not for; one wrong branch early costs more than the whole loop.
+- **Cheaper but slower.** Any split whose net effect is a longer wall clock than
+  doing it yourself. Token savings do not buy back the user's time.
 - **Shell-spawned pseudo-agent.** Running a one-off `pi` or another LLM through
   `bash`/`bg_run` instead of calling `Agent`. The process may finish, but the
   parent does not receive the real sub-agent result or lifecycle. Never stack

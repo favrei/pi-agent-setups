@@ -115,8 +115,11 @@ One Markdown file per role in `agents/`, plus a model mapping in `subagents-lite
 | `worker-luna` | General implementation |
 | `worker-muse` | Implementation, accepts images |
 | `worker-deepseek` | Implementation, accepts images — pinned to an **experimental** model ID |
+| `worker-glm` | Implementation, accepts images — cheapest input rate in the roster |
 
-All three accept images, so modality no longer constrains the rotation. That does *not* move visual judgment to them: workers capture the screenshot, the analyst decides whether it's right.
+All four accept images, so modality no longer constrains the rotation. That does *not* move visual judgment to them: workers capture the screenshot, the analyst decides whether it's right.
+
+`worker-glm` and `analyst-glm` are different models on the same family name — `glm-5.3-flash` at worker prices versus `glm-5.3` at analyst prices, roughly an order of magnitude apart. Read the role name, not the family. They also share one `opencode-go` concurrency slot with `analyst-kimi` and `analyst-qwen`, so two of them cannot run in parallel at the shipped cap of 1.
 
 **Analysts** — escalation only, for a genuinely large review that needs a second model family.
 
@@ -135,7 +138,7 @@ Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a
 
 | Skill | What it does |
 | --- | --- |
-| `economy-team` | Run the session as an analyst directing workers: delegate bulk output, verify cheaply, audit running workers every 5–10 min, never delegate the foreground or visual judgment |
+| `economy-team` | Run the session as an analyst directing workers: split emission from the agentic loop, delegate the emission and keep the loop, run both lanes in parallel, verify cheaply, audit every 5–10 min, never delegate the foreground or visual judgment |
 | `speak-human` | One-off decode pass over dense machine-written output — coding-agent hand-offs, eval logs, benchmark reports — defining every term and reconstructing the baselines the original skipped |
 | `my-pi-setup` | Resolves "my pi setup" to this repo's upstream and acts on it: install it here, change a role locally and push that change up, or report drift between this machine and upstream |
 
@@ -155,9 +158,14 @@ Output tokens cost several times more than input tokens on the same model, and t
 
 So the expensive model reads, decides, and writes *briefs*. A cheap worker emits the artifact. The expensive model then verifies with the cheapest signal that would actually fail — run the command, read the diff — rather than trusting a worker's summary of its own work.
 
-Two guardrails matter more than they look:
+Cost is only half of it. **Wall-clock time is the second objective**, because a session that saves tokens and takes twice as long has failed — the user waits out the whole difference. So the analyst splits each task in two: bulk *emission* (the 300-line module, the README, the test matrix) goes to a worker, while the *agentic loop* (run → diagnose → patch → re-run) stays with the analyst, since a cheap model taking a wrong branch early costs more than the loop it was meant to save. Those two lanes then run at the same time; dispatching is a fork, not a stopping point. A job that takes under ~5 minutes solo is not delegated at all.
+
+The failure this rules out: delegate everything, arm a timer, and idle until the worker reports back. That is cheap per token and slower than doing the work.
+
+Three guardrails matter more than they look:
 
 - **The foreground is never delegated.** The live session is who the user is talking to and who supervises the workers. Hand it off and you lose both at once.
+- **The foreground is never idle either.** If there is nothing for the analyst to do after a dispatch, the split was wrong — too much went to the worker.
 - **Visual judgment is never delegated.** Workers that accept images routinely describe what the code *should* have drawn instead of what the pixels show. They capture the screenshot; you look at it.
 
 Full reasoning is in `skills/economy-team/SKILL.md`.

@@ -13,6 +13,7 @@
     "worker-luna": "openai-codex/gpt-5.6-luna",
     "worker-muse": "meta/muse-spark-1.2-contributor",
     "worker-deepseek": "deepseek/deepseek-v4-flash-vision-exp",
+    "worker-glm": "opencode-go/glm-5.3-flash",
     "analyst-kimi": "opencode-go/kimi-k3",
     "analyst-qwen": "opencode-go/qwen3.8-max",
     "analyst-glm": "opencode-go/glm-5.3"

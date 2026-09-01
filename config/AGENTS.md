@@ -4,9 +4,12 @@
 
 - Use `openai-codex/gpt-5.6-sol` as the main model for routine work and normal
   review.
-- Do not use `opencode-go` models for routine work. Use one only when the task
-  genuinely needs a larger independent review, and state why before invoking
-  it. Otherwise use Sol.
+- Do not use the expensive `opencode-go` analyst models (`glm-5.3`, `kimi-k3`,
+  `qwen3.8-max`) for routine work. Use one only when the task genuinely needs a
+  larger independent review, and state why before invoking it. Otherwise use
+  Sol. This restriction is about those analyst-tier models, not the
+  `opencode-go` provider as such: `opencode-go/glm-5.3-flash` is a cheap
+  worker-tier model and is routine implementation work — see `worker-glm`.
 
 ## Worker Selection
 
@@ -14,13 +17,21 @@
   than always preferring one provider.
 - Apply capability filtering before randomness. `worker-deepseek` is text-only
   and must never receive image, screenshot, video, audio, or other visual-input
-  work. `worker-luna` and `worker-muse` can handle image/screenshot input.
+  work. `worker-luna`, `worker-muse`, and `worker-glm` can handle
+  image/screenshot input.
 - For text-only work, draw once with
-  `node -e "console.log(require('crypto').randomInt(3))"`: `0` selects
-  `worker-luna`, `1` selects `worker-deepseek`, and `2` selects `worker-muse`.
+  `node -e "console.log(require('crypto').randomInt(4))"`: `0` selects
+  `worker-luna`, `1` selects `worker-deepseek`, `2` selects `worker-muse`, and
+  `3` selects `worker-glm`.
 - For image/screenshot work, draw once with
-  `node -e "console.log(require('crypto').randomInt(2))"`: `0` selects
-  `worker-luna` and `1` selects `worker-muse`.
+  `node -e "console.log(require('crypto').randomInt(3))"`: `0` selects
+  `worker-luna`, `1` selects `worker-muse`, and `2` selects `worker-glm`.
+- `worker-glm` (`opencode-go/glm-5.3-flash`) is a worker and is unrelated to
+  `analyst-glm` (`opencode-go/glm-5.3`), which stays escalation-only. Do not
+  substitute one for the other because the names look alike.
+- `opencode-go` provider concurrency is 1, so `worker-glm` and any
+  `analyst-glm` / `analyst-kimi` / `analyst-qwen` contend for the same slot.
+  Do not plan a parallel lane that needs two `opencode-go` agents at once.
 - Keep video, audio, PDF, or uncertain multimodal analysis in the parent using
   the available media/file tools unless the selected worker's actual input and
   tool capabilities have been verified for that task.
@@ -73,6 +84,19 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   `run_in_background: true`; long shell calls use `bg_run` with a timeout and
   `isAgent: false`. Poll artifacts (diffs, timestamps), never status. Kill
   wrong-direction workers early and re-brief with the loophole closed.
+- **Wall clock counts too.** Saving quota while doubling elapsed time is a
+  loss, not a win. If a delegated split would finish later than doing the work
+  solo, do it solo.
+- **Two lanes, run in parallel.** Split each task into bulk emission (long
+  predictable typing) and the agentic loop (run → diagnose → patch → re-run).
+  Emission goes to a worker; the loop stays with the analyst, emphatically when
+  it is long, because a cheap model taking the wrong branch early costs more
+  than the loop itself. Dispatch and then immediately start your own lane in
+  the same turn — dispatching is a fork, not a stopping point. A whole job
+  under ~5 minutes solo is not delegated at all.
+- **Never dispatch into idling.** Before dispatching, name what you will be
+  doing while the worker runs. If the answer is "auditing" or "nothing", the
+  split is wrong: keep more of the work.
 - **Delegation contract: end notification + timeout.** Every sub-agent or
   delegate must wake the foreground on completion and be bounded by a timeout.
   For `bg_delegate`, wake defaults are on and `timeoutSeconds` defaults to 1200.
@@ -91,7 +115,9 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   is the audit timer: a `bg_run` with `command: "sleep 300"` (or 600),
   `isAgent: false`, and default `triggerOnCompletion`, which wakes a
   follow-up turn to audit the workers on the 5–10 minute cadence — an audit
-  return, never a wait for the delegated task's own completion. Doing
-  foreground tasks while a delegated task runs is a separate, allowed
-  scenario — these bans are about waiting for / handing off the delegate,
-  not about keeping busy.
+  return, never a wait for the delegated task's own completion. That timer is
+  a fallback for the rare pure-emission dispatch, not the normal rhythm:
+  when you are running your own lane, audit at its natural breakpoints
+  instead. Doing foreground work while a delegated task runs is the expected
+  state — these bans are about waiting for / handing off the delegate, not
+  about keeping busy.
