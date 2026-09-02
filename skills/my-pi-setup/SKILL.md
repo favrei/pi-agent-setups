@@ -93,8 +93,10 @@ These hold for every request, whatever it is.
 2. **Merge JSON that the repo only partly owns.** For a file like
    `config/settings.json`, write only the keys the repo defines and leave every
    other key exactly as found. Replace whole array values rather than merging them
-   element-wise. Losing an unmanaged key is a failure even if everything else
-   looks right.
+   element-wise. Write JSON as UTF-8 without a byte-order mark (BOM), including on
+   Windows, and verify the saved bytes do not begin with `EF BB BF`; extensions
+   may pass the raw text directly to `JSON.parse`. Losing an unmanaged key is a
+   failure even if everything else looks right.
 3. **Never delete what the repo does not ship.** This is an overlay. Other skills,
    roles, extensions, and settings on the machine must survive untouched.
 4. **Local first, upstream second.** Apply a change to `~/.pi/agent/` before

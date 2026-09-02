@@ -17,6 +17,6 @@
     "npm:pi-web-access",
     "npm:pi-codex-search",
     "npm:pi-mcp-adapter",
-    "git:github.com/HCAHOI/pi-ssh@74f5fa8cd486db2d611fd5181cd1ebeed8c64646"
+    "git:github.com/HCAHOI/pi-ssh"
   ]
 }
