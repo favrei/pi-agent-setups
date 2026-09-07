@@ -128,9 +128,12 @@ All four accept images, so modality no longer constrains the rotation. That does
 | `analyst-qwen` | Accepts images |
 | `analyst-kimi` | Accepts images |
 | `analyst-glm` | **Text-only** |
-| `analyst-opus` | Independent review; ships `hidden: true` and disabled by default |
+| `analyst-opus` | Cross-family independent review (Anthropic) |
+| `analyst-astra` | Hard reasoning at `xhigh`, inside the OpenAI family — the expensive one |
 
-Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a role is a one-line change. Provider concurrency caps live there too — worth keeping low for any provider that rate-limits aggressively.
+`analyst-opus` and `analyst-astra` are the two elite seats, and they are not interchangeable: Opus buys a different model family, Astra buys more depth in the same family as the session model. Pick by which one the disagreement actually needs. Both cost real money — "more eyes" is not a reason to spawn either.
+
+Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a role is a one-line change. Provider concurrency caps live there too — worth keeping low for any provider that rate-limits aggressively, and higher only where the account tolerates it (`meta` and `deepseek` are raised here; `opencode-go` stays at 1).
 
 ### Skills
 

@@ -71,14 +71,15 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   never delegates a judgment call.
 - **Same-model escalation.** When bulk output genuinely needs elite-class
   judgment, dispatch a sub-agent on the session model or another primary-tier
-  model (`openai-codex/gpt-5.6-sol`, `anthropic/claude-opus-5`) via the
-  sub-agent tool's `model` override, instead of forcing economy-tier workers.
+  model (`openai-codex/gpt-5.6-sol`, `openai-codex/gpt-6-astra`,
+  `anthropic/claude-opus-5`) via the sub-agent tool's `model` override,
+  instead of forcing economy-tier workers.
   Use it for hard implementation or review lanes, not routine typing.
 - **Analyst discussion.** For a named disagreement, a high-risk call, or an
   independent review where family diversity is the point, spawn another
-  analyst: `analyst-opus` for elite second opinion, `analyst-qwen` /
-  `analyst-kimi` for cross-family diversity. Name the disagreement in the
-  brief. `analyst-glm` is text-only and never gets visual work. "More eyes"
+  analyst: `analyst-astra` (GPT-6 Astra) or `analyst-opus` for an elite second
+  opinion, `analyst-qwen` / `analyst-kimi` for cross-family diversity. Name the
+  disagreement in the brief. `analyst-glm` is text-only and never gets visual work. "More eyes"
   alone is not a reason.
 - **Responsive by default.** Sub-agents use `Agent` with
   `run_in_background: true`; long shell calls use `bg_run` with a timeout and
