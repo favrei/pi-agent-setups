@@ -324,7 +324,7 @@ A worker saying "done, all tests pass" is a claim, not evidence. Confirm with th
 cheapest signal that would actually fail:
 
 1. Run the check yourself (`bash`) — cheapest, most conclusive.
-2. `git diff` / `lsp_diagnostics` / `lens_diagnostics` — cheap, catches slop.
+2. Inspect `git diff` and run the relevant project lint/type checks.
 3. Read the changed hunks — cheap for you, since reading is input.
 
 Reading is cheap; accepting is expensive. Skipping verification is how you end up

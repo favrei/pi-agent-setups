@@ -65,7 +65,6 @@ Declared in `settings.json` under `packages[]`. All but one are published to the
 | `pi-subagents-lite` | `alexparamonov` | Sub-agents with isolated sessions and per-role models — the `Agent` tool |
 | `pi-background-tasks` | `ismailsaleekh` | `bg_run`, `bg_delegate`, attested Pi runs, and the `fusion_*` multi-model workflows |
 | `pi-claude-auth` | `pankajudhas81` | Reuses existing Claude Code credentials — no separate login |
-| `pi-lens` | `apmantza` | LSP diagnostics, ast-grep, symbol/module/project reports |
 | `pi-web-access` | `nicobailon` | `web_search`, `fetch_content`, GitHub/PDF/YouTube handling — routed Codex-first, see [Search routing](#search-routing) |
 | `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
 | `pi-mcp-adapter` | `nicobailon` | MCP gateway (`mcp`) and batch scripting (`mcpScript`) |
