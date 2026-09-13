@@ -10,7 +10,7 @@ This repo is **public**. Everything in it is deliberately generic. See [What thi
 
 **If you're me:** this is the drop-in. On a new box, say `/my-pi-setup` and what you want — the skill knows where this repo lives and does the rest. The parts that are machine-specific or private are *not* here by design; you re-add them locally, and they stay local.
 
-**If you're a visitor:** this is a worked example of a pi configuration that leans on cheap sub-agents for bulk output and reserves the expensive model for judgment. The `economy-team` skill is the interesting part; the rest is plumbing. Take what's useful, none of it depends on anything private.
+**If you're a visitor:** this is a worked example of a pi configuration that delegates bulk output to cheap sub-agents when it genuinely helps and keeps judgment in the session model. The `economy-team` skill is the interesting part; the rest is plumbing. Take what's useful, none of it depends on anything private.
 
 ---
 
@@ -113,10 +113,10 @@ One Markdown file per role in `agents/`, plus a model mapping in `subagents-lite
 | --- | --- |
 | `worker-luna` | General implementation |
 | `worker-muse` | Implementation, accepts images |
-| `worker-deepseek` | Implementation, accepts images — pinned to an **experimental** model ID |
+| `worker-deepseek` | Implementation, text-only by policy — pinned to an **experimental** model ID |
 | `worker-glm` | Implementation, accepts images — cheapest input rate in the roster |
 
-All four accept images, so modality no longer constrains the rotation. That does *not* move visual judgment to them: workers capture the screenshot, the analyst decides whether it's right.
+The global policy treats `worker-deepseek` as text-only and routes visual work to the other three; that is a conservative standing rule, not a tested runtime claim. It does *not* move visual judgment to any worker: workers capture the screenshot, the analyst decides whether it's right.
 
 `worker-glm` and `analyst-glm` are different models on the same family name — `glm-5.3-flash` at worker prices versus `glm-5.3` at analyst prices, roughly an order of magnitude apart. Read the role name, not the family. They also share one `opencode-go` concurrency slot with `analyst-kimi` and `analyst-qwen`, so two of them cannot run in parallel at the shipped cap of 1.
 
@@ -140,9 +140,9 @@ Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a
 
 | Skill | What it does |
 | --- | --- |
-| `economy-team` | Run the session as an analyst directing workers: split emission from the agentic loop, delegate the emission and keep the loop, run both lanes in parallel, verify cheaply, audit every 5–10 min, never delegate the foreground or visual judgment |
+| `economy-team` | Run the session as an analyst that delegates genuinely independent, bounded work to cheaper workers when it benefits — precise briefs, cheap verification, breakpoint audits — while design, visual verdicts, integration, and the foreground itself stay undelegated |
 | `speak-human` | One-off decode pass over dense machine-written output — coding-agent hand-offs, eval logs, benchmark reports — defining every term and reconstructing the baselines the original skipped |
-| `my-pi-setup` | Resolves "my pi setup" to this repo's upstream and acts on it: install it here, change a role locally and push that change up, or report drift between this machine and upstream |
+| `my-pi-setup` | Resolves explicit my-pi-setup mentions to this repo's upstream for install, sync, publishing, and drift comparison; generic setup talk and ordinary local audits do not trigger it or fetch anything |
 
 All three are about the agent loop itself: how work gets delegated, how its output gets made legible, and how the setup itself is carried between machines. A skill has to earn its place by that standard, not by being useful in general.
 
@@ -158,16 +158,13 @@ All three are about the agent loop itself: how work gets delegated, how its outp
 
 Output tokens cost several times more than input tokens on the same model, and the gap between an analyst-tier model and a worker-tier model is larger still. **Reading is cheap. Writing is not.**
 
-So the expensive model reads, decides, and writes *briefs*. A cheap worker emits the artifact. The expensive model then verifies with the cheapest signal that would actually fail — run the command, read the diff — rather than trusting a worker's summary of its own work.
+So the session model reads, decides, and writes *briefs* when a piece of work genuinely benefits. A cheap worker emits the artifact. The session model then verifies with the cheapest signal that would actually fail — run the command, read the diff — rather than trusting a worker's summary of its own work.
 
-Cost is only half of it. **Wall-clock time is the second objective**, because a session that saves tokens and takes twice as long has failed — the user waits out the whole difference. So the analyst splits each task in two: bulk *emission* (the 300-line module, the README, the test matrix) goes to a worker, while the *agentic loop* (run → diagnose → patch → re-run) stays with the analyst, since a cheap model taking a wrong branch early costs more than the loop it was meant to save. Those two lanes then run at the same time; dispatching is a fork, not a stopping point. A job that takes under ~5 minutes solo is not delegated at all.
+Delegation is **optional and benefit-based, not mandatory**. Long predictable output and mechanical repetition are good candidates; small, subtle, or session-coupled work stays solo, and workers may run focused tests and debugging within a briefed scope. Cost is only half of it: **wall-clock time is the second objective**, and a split that saves tokens but finishes later than doing the work solo is a loss, not a win.
 
-The failure this rules out: delegate everything, arm a timer, and idle until the worker reports back. That is cheap per token and slower than doing the work.
-
-Three guardrails matter more than they look:
+Two guardrails matter more than they look:
 
 - **The foreground is never delegated.** The live session is who the user is talking to and who supervises the workers. Hand it off and you lose both at once.
-- **The foreground is never idle either.** If there is nothing for the analyst to do after a dispatch, the split was wrong — too much went to the worker.
 - **Visual judgment is never delegated.** Workers that accept images routinely describe what the code *should* have drawn instead of what the pixels show. They capture the screenshot; you look at it.
 
 Full reasoning is in `skills/economy-team/SKILL.md`.
@@ -177,7 +174,8 @@ Full reasoning is in `skills/economy-team/SKILL.md`.
 `config/AGENTS.md` supplies the setup-wide model and worker-selection policy. Its
 **Elite Team Mode** keeps the foreground analyst in charge while the user is
 present: quality outranks quota savings, judgment and verification remain with
-the session analyst, difficult bulk work may escalate to a primary-tier model,
+the session analyst, and escalation runs through configured named roles rather
+than invented tool parameters. Delegation there is optional and benefit-based,
 and every delegated task must have a completion wake-up and bounded timeout.
 The `economy-team` skill still governs routine bulk-output delegation underneath
 those interactive-session overrides.
@@ -226,7 +224,7 @@ Private skills live in `~/.agents/skills/` and are simply never copied here. Kee
 
 - **Package versions are unpinned by design.** See [pi extensions](#pi-extensions). An install takes current npm releases; verify provider auth still works after any bump that touches it. `pi-ssh` follows the owner's `favrei/pi-ssh` fork without a version pin. Check its `node_modules` symlinks after updates and reload extension code before testing.
 - **Model IDs rot.** Providers rename and retire models on short notice. When a role stops spawning, check `subagents-lite.json` against the live model list first — that's almost always the cause. Removing a retired model means editing three places: the model store entry, the `subagents-lite.json` mapping, and any skill prose that names it.
-- **One role is pinned to an experimental model.** `worker-deepseek` uses a vendor `-exp` model ID, which buys image support at the same price as the text-only variant but can be renamed or withdrawn without notice. It is the first thing to suspect when that worker stops spawning, and the non-`exp` variant of the same model is a drop-in fallback. Verified working when pinned; "experimental" is a stability claim, not a quality one.
+- **One role is pinned to an experimental model.** `worker-deepseek` uses a vendor `-exp` model ID, which can be renamed or withdrawn without notice; the global policy treats the role as text-only regardless. It is the first thing to suspect when that worker stops spawning, and the non-`exp` variant of the same model is a drop-in fallback. Verified working when pinned; "experimental" is a stability claim, not a quality one.
 - **Sub-agent extensions are opt-in.** Every role sets `extensions: false` except `worker-muse`, which needs `[meta]` for the Muse tools. Left on by default, sub-agents load the full extension stack and get slow and expensive for no benefit.
 
 ## License

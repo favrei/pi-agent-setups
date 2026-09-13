@@ -1,6 +1,6 @@
 ---
 name: my-pi-setup
-description: Resolves "my pi setup" to the user's upstream pi-configuration repository on GitHub and carries out whatever the user asks against it — pulling the setup onto this machine, adding or changing anything it holds, pushing a fix upstream so the user's other pi agents pick it up, inspecting what is configured, or reporting drift between this machine and upstream. Use whenever the user says my-pi-setup, /my-pi-setup, or $my-pi-setup, or otherwise refers to their pi setup, their agent setup, or their setup repo, from any working directory and whether or not a local clone exists.
+description: Acts on the user's upstream pi-configuration repository (favrei/pi-agent-setups) over SSH for four kinds of upstream setup work — installing this setup onto a machine, syncing a machine from upstream, publishing a change upstream so other machines pick it up, and comparing this machine against upstream for drift. Triggers only for those upstream setup actions, or on an explicit my-pi-setup / /my-pi-setup / $my-pi-setup mention; generic mentions of a setup, or ordinary local audits and inspection of what is configured, do not trigger it and fetch nothing.
 ---
 
 # My Pi Setup
@@ -11,15 +11,21 @@ description: Resolves "my pi setup" to the user's upstream pi-configuration repo
 git@github.com:favrei/pi-agent-setups.git   (branch: main)
 ```
 
-Read it as "the upstream of my pi setup". Whatever the user says around it is the
-request. Carry that request out against this repo using the rules below. Do not
-demand a particular phrasing, do not offer a menu, and do not narrow the request
-to something you have seen before.
+Read it as "the upstream of my pi setup". This skill covers the **upstream setup
+actions**: install this setup on a machine, sync a machine from upstream, publish
+a change upstream so the user's other pi agents pick it up, and compare this
+machine against upstream (drift). Explicit mentions — `my-pi-setup`,
+`/my-pi-setup`, `$my-pi-setup` — always run this skill.
 
-The request can be anything: install this setup here, add a plugin or extension,
-change a model, fix something and send the fix upstream, check what is configured,
-update this machine, compare it against upstream. Treat the list of things people
-ask for as open.
+Anything else does **not** trigger it: a generic mention of "my setup" or "agent
+setup", or an ordinary local audit or inspection of what is configured on this
+machine, is handled in the current session without invoking this skill and
+without fetching anything from upstream.
+
+When it does run, whatever the user says around the trigger is the request.
+Carry that request out against this repo using the rules below. Do not demand a
+particular phrasing, do not offer a menu, and do not narrow the request to
+something you have seen before.
 
 This works from **any** directory. Never assume the current directory is a clone,
 and never assume a clone exists at all.
@@ -102,11 +108,31 @@ These hold for every request, whatever it is.
 4. **Local first, upstream second.** Apply a change to `~/.pi/agent/` before
    pushing it. The local edit is immediate and reversible; the push is shared
    state.
-5. **Ask before pushing, not before editing locally.** Show the diff first.
+5. **Push gate, after a reviewed diff.** Editing locally needs no approval;
+   publishing does. If the user's request already explicitly authorizes
+   publishing — asked to push, send the fix upstream, update the other machines —
+   the gate is satisfied; otherwise ask before pushing. Either way, show and
+   review the scoped diff for exactly the files being pushed before the push
+   happens.
 6. **If a write fails, report the resulting split.** Say which side is ahead —
    this machine or upstream. Never report success.
 7. **If the file will not parse, stop.** Back it up, report the error, ask. Never
    overwrite a broken file to clear it.
+
+## Commit identity
+
+Before committing anything for push, set the **repo-local** Git identity (never
+the global one) so the public commit's author and committer are consistent:
+
+```bash
+git -C <repo> config user.name "favrei"
+git -C <repo> config user.email "17000685+favrei@users.noreply.github.com"
+```
+
+Check for author/committer environment overrides before committing, and verify
+both identities on the resulting commit with `git show --format=fuller` before
+pushing. Repository config alone is not proof when overrides exist. Never change
+the user's global identity or push a private/machine-local author or committer.
 
 ## Requests that reach the user's other machines
 
@@ -163,6 +189,6 @@ them, and a stale ID fails when an agent is spawned, not when it is installed.
 | --- | --- |
 | Remote unreachable | SSH key or network. Stop; do not use a stale copy. |
 | A role fails only when spawned | Model ID renamed or retired. Check against the provider's current list. |
-| `worker-deepseek` fails to spawn | Pinned to an experimental `-exp` model ID. The non-`exp` variant of the same model is the drop-in fallback, losing image support. |
+| `worker-deepseek` fails to spawn | Pinned to an experimental `-exp` model ID. The non-`exp` variant of the same model is the drop-in fallback. |
 | Live JSON will not parse | Back up, report, ask. Never overwrite to clear the error. |
 | Something the user runs is missing after install | Expected. This repo is an overlay and does not ship everything on the machine. |
