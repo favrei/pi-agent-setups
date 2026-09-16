@@ -134,6 +134,8 @@ The global policy treats `worker-deepseek` as text-only and routes visual work t
 
 Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a role is a one-line change. Provider concurrency caps live there too — worth keeping low for any provider that rate-limits aggressively, and higher only where the account tolerates it (`meta` and `deepseek` are raised here; `opencode-go` stays at 1).
 
+`outputTranscript` ships `true`: every run streams to `/tmp/pi-agent-outputs/<agentId>.log`. A background spawn's ack carries the full agent ID, so the parent can check progress on demand by reading that file with a line limit — no full-context injection, read at breakpoints rather than polling.
+
 ### Skills
 
 **Scope: skills about driving an agent and writing code.** Nothing else ships, even when it's harmless.

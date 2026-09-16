@@ -7,7 +7,7 @@
     "includeContextFiles": true,
     "loadSkillsImplicitly": true,
     "loadExtensionsImplicitly": true,
-    "outputTranscript": false,
+    "outputTranscript": true,
     "Explore": "openai-codex/gpt-5.6-sol",
     "analyst-opus": "anthropic/claude-opus-5",
     "analyst-astra": "openai-codex/gpt-6-astra",
