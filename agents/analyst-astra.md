@@ -6,7 +6,7 @@ tools: [read, bash, grep, find]
 extensions: true
 skills: true
 model: openai-codex/gpt-6-astra
-thinking: xhigh
+thinking: medium
 max_turns: 256
 include_context_files: true
 include_system_prompt: true
