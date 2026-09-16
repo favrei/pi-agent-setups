@@ -3,8 +3,8 @@ name: worker-muse
 display_name: Worker Muse
 description: High-throughput implementation worker using Meta Muse Spark 1.3 Contributor.
 tools: [read, bash, edit, write, grep, find]
-extensions: [meta]
-skills: false
+extensions: true
+skills: true
 model: meta/muse-spark-1.3-contributor
 thinking: xhigh
 max_turns: 256

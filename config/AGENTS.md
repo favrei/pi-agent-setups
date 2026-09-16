@@ -15,26 +15,20 @@
 
 - For bounded implementation work, choose randomly among eligible workers rather
   than always preferring one provider.
-- Apply capability filtering before randomness. `worker-deepseek` is text-only
-  and must never receive image, screenshot, video, audio, or other visual-input
-  work. `worker-luna`, `worker-muse`, and `worker-glm` can handle
-  image/screenshot input.
-- For text-only work, draw once with
+- All four workers (`worker-luna`, `worker-deepseek`, `worker-muse`,
+  `worker-glm`) handle text and image/screenshot input. Keep video, audio,
+  or PDF analysis in the parent unless a worker's actual input capabilities
+  have been verified for that task.
+- For implementation work, draw once with
   `node -e "console.log(require('crypto').randomInt(4))"`: `0` selects
   `worker-luna`, `1` selects `worker-deepseek`, `2` selects `worker-muse`, and
   `3` selects `worker-glm`.
-- For image/screenshot work, draw once with
-  `node -e "console.log(require('crypto').randomInt(3))"`: `0` selects
-  `worker-luna`, `1` selects `worker-muse`, and `2` selects `worker-glm`.
 - `worker-glm` (`opencode-go/glm-5.3-flash`) is a worker and is unrelated to
   `analyst-glm` (`opencode-go/glm-5.3`), which stays escalation-only. Do not
   substitute one for the other because the names look alike.
 - `opencode-go` provider concurrency is 1, so `worker-glm` and any
   `analyst-glm` / `analyst-kimi` / `analyst-qwen` contend for the same slot.
   Do not plan a parallel lane that needs two `opencode-go` agents at once.
-- Keep video, audio, PDF, or uncertain multimodal analysis in the parent using
-  the available media/file tools unless the selected worker's actual input and
-  tool capabilities have been verified for that task.
 - Provider availability, concurrency, task-specific suitability, independent
   review diversity, or an explicit user choice may override the random draw.
   If the selected worker is unavailable, use another eligible worker.

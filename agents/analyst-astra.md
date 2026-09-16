@@ -3,8 +3,8 @@ name: analyst-astra
 display_name: Analyst Astra
 description: Elite independent analysis adviser on GPT-6 Astra; use for hard reasoning, high-risk calls, and second opinions inside the OpenAI family.
 tools: [read, bash, grep, find]
-extensions: false
-skills: false
+extensions: true
+skills: true
 model: openai-codex/gpt-6-astra
 thinking: xhigh
 max_turns: 256

@@ -3,8 +3,8 @@ name: analyst-kimi
 display_name: Analyst Kimi
 description: Expensive OpenCode Go escalation for genuinely large independent reviews only; prefer Opus 5 or GPT-5.6 Sol otherwise.
 tools: [read, bash, grep, find]
-extensions: false
-skills: false
+extensions: true
+skills: true
 model: opencode-go/kimi-k3
 thinking: high
 max_turns: 256

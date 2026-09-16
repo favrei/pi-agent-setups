@@ -3,8 +3,8 @@ name: analyst-qwen
 display_name: Analyst Qwen
 description: Expensive OpenCode Go escalation for genuinely large independent reviews only; prefer Opus 5 or GPT-5.6 Sol otherwise.
 tools: [read, bash, grep, find]
-extensions: false
-skills: false
+extensions: true
+skills: true
 model: opencode-go/qwen3.8-max
 thinking: high
 max_turns: 256

@@ -1,11 +1,11 @@
 ---
 name: worker-deepseek
 display_name: Worker DeepSeek
-description: Implementation worker using DeepSeek V4 Flash Vision Exp; accepts text and images. Experimental model ID, may be renamed or retired without notice.
+description: Implementation worker using DeepSeek Flash (default alias for the latest flash); accepts text and images.
 tools: [read, bash, edit, write, grep, find]
-extensions: false
-skills: false
-model: deepseek/deepseek-v4-flash-vision-exp
+extensions: true
+skills: true
+model: deepseek/deepseek-flash
 thinking: max
 max_turns: 256
 include_context_files: true

@@ -3,8 +3,8 @@ name: worker-luna
 display_name: Worker Luna
 description: Fast, low-cost implementation worker using OpenAI Luna subscription access.
 tools: [read, bash, edit, write, grep, find]
-extensions: false
-skills: false
+extensions: true
+skills: true
 model: openai-codex/gpt-5.6-luna
 thinking: max
 max_turns: 256
