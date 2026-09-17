@@ -3,7 +3,7 @@ name: analyst-opus
 display_name: Analyst Opus
 description: Preferred independent review adviser using Anthropic Claude Opus 5. Use for elite second opinions, high-risk calls, and independent review where cross-family diversity is the point.
 hidden: false
-tools: [read, bash, grep, find]
+tools: [read, bash, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: anthropic/claude-opus-5

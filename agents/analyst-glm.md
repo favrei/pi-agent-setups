@@ -2,7 +2,7 @@
 name: analyst-glm
 display_name: Analyst GLM
 description: Expensive OpenCode Go escalation for genuinely large non-visual reviews only; prefer Opus 5 or GPT-5.6 Sol otherwise.
-tools: [read, bash, grep, find]
+tools: [read, bash, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: opencode-go/glm-5.3
