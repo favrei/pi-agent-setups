@@ -31,9 +31,10 @@ What it guarantees, whatever you ask: it compares before writing and skips ident
 If you'd rather do it by hand, the mapping is the whole spec:
 
 ```text
-agents/            7 sub-agent role definitions -> ~/.pi/agent/agents/
+agents/            9 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            3 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        1 local pi extension         -> ~/.pi/agent/extensions/
+patches/           1 third-party package fix    -> ~/.pi/agent/patches/  (copied, NOT run)
 config/
   AGENTS.md           copied to ~/.pi/agent/AGENTS.md
   settings.json       MERGED into ~/.pi/agent/settings.json
@@ -49,6 +50,7 @@ Note the two distinct roots. `config/` installs into `~/.pi/agent/`; `pi/` insta
 1. **Log in.** Launch pi and authenticate each provider you actually use. Nothing here touches credentials — the skill is explicitly instructed to stop and hand back rather than attempt auth.
 2. **Confirm the model IDs** in `config/subagents-lite.json` still exist. Providers rename and retire models constantly, and a stale ID fails at sub-agent spawn time — not at install time, so the installer cannot catch it for you.
 3. **Re-add private, machine-specific skills** (see [Local-only skills](#local-only-skills)) and, optionally, the third-party skills this repo doesn't vendor.
+4. **Run the local patches.** `patches/` is copied, never executed by the installer. Until you run it, the shipped fix is present as a file and absent as a fix — see [Local patches](#local-patches).
 
 ---
 
@@ -103,6 +105,20 @@ This file contains no credentials — only provider names and failure classes �
 
 - `extensions/tool-pair-repair.ts` — repairs Anthropic `tool_use`/`tool_result` pairing at the last gate before the HTTP request. Without it, an interrupted tool call can wedge a session into an unrecoverable `400: tool_use ids were found without tool_result blocks`. Unpublished, self-contained, ~150 lines.
 
+### Local patches
+
+`patches/` holds fixes for **third-party packages this repo does not own** — code under `~/.pi/agent/npm/node_modules/`, which `pi update --extensions` replaces wholesale. Installing this repo copies the scripts to `~/.pi/agent/patches/`; **it does not run them.** Each is a standalone Python 3 script, safe to re-run, and refuses to touch a version it wasn't written for.
+
+- `pi-background-tasks-2.6.2-transcript-context.py` — pi 0.86 changed what a provider is handed. The context is now a normalized transcript whose `role: "system"` messages carry the system prompt and tool declarations, instead of separate `context.systemPrompt` and `context.tools` fields. `pi-background-tasks` 2.6.2 still assumes the old shape: its Anthropic transport doesn't recognise the new role, falls through into a branch that assumes `toolResult`, and spins there forever — 100% of a core, unresponsive to SIGTERM — and would have dropped the prompt and tools even if it hadn't hung. **Symptom:** a background task routed to an Anthropic model (a `bg_delegate` on Opus, for instance) never starts, pins a CPU, and only dies on SIGKILL. The patch folds the transcript back into the legacy shape and converts that infinite loop into a thrown error, so an unknown role fails loudly instead of hanging. Tracking [`pi-background-tasks` #27](https://github.com/ismailsaleekh/pi-background-tasks/issues/27) (fix PR #28, unmerged at time of writing).
+
+Apply it after install, and again after any `pi update --extensions`, then `/reload`:
+
+```bash
+python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-transcript-context.py
+```
+
+It prints the backup path it made, or `already patched`, or refuses with the version it found. Delete the file once upstream ships a release that fixes the bug — the version guard means a stale patch fails loudly rather than quietly mangling a package it no longer matches.
+
 ### Sub-agent roles
 
 One Markdown file per role in `agents/`, plus a model mapping in `subagents-lite.json`. The split is the whole point:
@@ -113,10 +129,10 @@ One Markdown file per role in `agents/`, plus a model mapping in `subagents-lite
 | --- | --- |
 | `worker-luna` | General implementation |
 | `worker-muse` | Implementation, accepts images |
-| `worker-deepseek` | Implementation, text-only by policy — pinned to an **experimental** model ID |
+| `worker-deepseek` | Implementation, accepts images — tracks the floating `deepseek-flash` alias |
 | `worker-glm` | Implementation, accepts images — cheapest input rate in the roster |
 
-The global policy treats `worker-deepseek` as text-only and routes visual work to the other three; that is a conservative standing rule, not a tested runtime claim. It does *not* move visual judgment to any worker: workers capture the screenshot, the analyst decides whether it's right.
+All four accept text and images. That is an input-capability claim only — it does *not* move visual judgment to a worker: workers capture the screenshot, the analyst decides whether it's right. Video, audio, and PDF stay in the foreground unless a given worker has actually been verified on that input for the task at hand.
 
 `worker-glm` and `analyst-glm` are different models on the same family name — `glm-5.3-flash` at worker prices versus `glm-5.3` at analyst prices, roughly an order of magnitude apart. Read the role name, not the family. They also share one `opencode-go` concurrency slot with `analyst-kimi` and `analyst-qwen`, so two of them cannot run in parallel at the shipped cap of 1.
 
@@ -128,11 +144,11 @@ The global policy treats `worker-deepseek` as text-only and routes visual work t
 | `analyst-kimi` | Accepts images |
 | `analyst-glm` | **Text-only** |
 | `analyst-opus` | Cross-family independent review (Anthropic) |
-| `analyst-astra` | Hard reasoning at `xhigh`, inside the OpenAI family — the expensive one |
+| `analyst-astra` | Hard reasoning inside the OpenAI family — the expensive one; ships at `thinking: medium` |
 
 `analyst-opus` and `analyst-astra` are the two elite seats, and they are not interchangeable: Opus buys a different model family, Astra buys more depth in the same family as the session model. Pick by which one the disagreement actually needs. Both cost real money — "more eyes" is not a reason to spawn either.
 
-Model IDs live in `subagents-lite.json`, not in the role files, so retargeting a role is a one-line change. Provider concurrency caps live there too — worth keeping low for any provider that rate-limits aggressively, and higher only where the account tolerates it (`meta` and `deepseek` are raised here; `opencode-go` stays at 1).
+Model IDs appear in two places — the `agent` map in `subagents-lite.json` and each role file's `model:` line — so retargeting a role means changing both and confirming they agree. Provider concurrency caps live in `subagents-lite.json` only — worth keeping low for any provider that rate-limits aggressively, and higher only where the account tolerates it (`meta` and `deepseek` are raised here; `opencode-go` stays at 1).
 
 `outputTranscript` ships `true`: every run streams to `/tmp/pi-agent-outputs/<agentId>.log`. A background spawn's ack carries the full agent ID, so the parent can check progress on demand by reading that file with a line limit — no full-context injection, read at breakpoints rather than polling.
 
@@ -226,8 +242,9 @@ Private skills live in `~/.agents/skills/` and are simply never copied here. Kee
 
 - **Package versions are unpinned by design.** See [pi extensions](#pi-extensions). An install takes current npm releases; verify provider auth still works after any bump that touches it. `pi-ssh` follows the owner's `favrei/pi-ssh` fork without a version pin. Check its `node_modules` symlinks after updates and reload extension code before testing.
 - **Model IDs rot.** Providers rename and retire models on short notice. When a role stops spawning, check `subagents-lite.json` against the live model list first — that's almost always the cause. Removing a retired model means editing three places: the model store entry, the `subagents-lite.json` mapping, and any skill prose that names it.
-- **One role is pinned to an experimental model.** `worker-deepseek` uses a vendor `-exp` model ID, which can be renamed or withdrawn without notice; the global policy treats the role as text-only regardless. It is the first thing to suspect when that worker stops spawning, and the non-`exp` variant of the same model is a drop-in fallback. Verified working when pinned; "experimental" is a stability claim, not a quality one.
-- **Sub-agent extensions are opt-in.** Every role sets `extensions: false` except `worker-muse`, which needs `[meta]` for the Muse tools. Left on by default, sub-agents load the full extension stack and get slow and expensive for no benefit.
+- **One role follows a floating alias.** `worker-deepseek` targets `deepseek/deepseek-flash`, which resolves to the vendor's current flash release rather than a fixed build, so the role can shift behaviour with no change on your side. It replaced an earlier `-exp` pin. If the alias itself stops resolving, name a concrete flash model ID in `subagents-lite.json`.
+- **Sub-agent extensions and skills are on.** Every role sets `extensions: true` and `skills: true`, so a spawned role starts with the same extension tools and skills as the session. What keeps a role narrow is its `tools:` list, not the extension switch: `pi-ssh/*` and `pi-web-access/*` are granted, while `pi-goal`, `pi-background-tasks`, and `pi-mcp-adapter` are pinned to `/none`. Widen a role there, deliberately, rather than by turning extensions off and on.
+- **Patches don't survive package updates.** `pi update --extensions` reinstalls `node_modules` and silently removes anything in `patches/` that had been applied to it. Re-run the patch scripts after any update — see [Local patches](#local-patches).
 
 ## License
 

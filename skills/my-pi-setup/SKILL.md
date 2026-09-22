@@ -56,6 +56,7 @@ directory of the same name; files under `config/` install at the root of
 <repo>/agents/…      ->  ~/.pi/agent/agents/…
 <repo>/skills/…      ->  a skills root, see below
 <repo>/extensions/…  ->  ~/.pi/agent/extensions/…
+<repo>/patches/…     ->  ~/.pi/agent/patches/…
 <repo>/config/X      ->  ~/.pi/agent/X
 <repo>/pi/X          ->  ~/.pi/X
 ```
@@ -64,6 +65,13 @@ directory of the same name; files under `config/` install at the root of
 `~/.pi/` itself, for tools that keep config a level above the agent directory —
 `pi/web-search.json` is read by `pi-web-access` at `~/.pi/web-search.json` and
 is ignored if it lands in `~/.pi/agent/`. Do not collapse `pi/` into `config/`.
+
+`patches/` holds fixes for third-party npm packages under
+`~/.pi/agent/npm/node_modules/`. Install them the same way you install anything
+else — copy the file — but **do not run them.** They are executable code against a
+package this repo does not own. Instead, report the exact command and say plainly
+that the fix does not take effect until it is run, and that `pi update
+--extensions` removes it again.
 
 Derive the mapping from what the repo actually contains at the time you run, not
 from a memorised list. New directories may appear; apply the same rule to them.
@@ -189,6 +197,7 @@ them, and a stale ID fails when an agent is spawned, not when it is installed.
 | --- | --- |
 | Remote unreachable | SSH key or network. Stop; do not use a stale copy. |
 | A role fails only when spawned | Model ID renamed or retired. Check against the provider's current list. |
-| `worker-deepseek` fails to spawn | Pinned to an experimental `-exp` model ID. The non-`exp` variant of the same model is the drop-in fallback. |
+| `worker-deepseek` fails to spawn | Its model is the floating `deepseek/deepseek-flash` alias, not a fixed build. Check the vendor's current model list and pin a concrete flash ID in `subagents-lite.json`. |
+| A background task on an Anthropic model hangs at 100% CPU and ignores SIGTERM | `pi-background-tasks` 2.6.2 against pi ≥ 0.86. Apply `patches/pi-background-tasks-2.6.2-transcript-context.py`, then `/reload`. Re-apply after every `pi update --extensions`. |
 | Live JSON will not parse | Back up, report, ask. Never overwrite to clear the error. |
 | Something the user runs is missing after install | Expected. This repo is an overlay and does not ship everything on the machine. |
