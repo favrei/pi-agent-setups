@@ -2,7 +2,7 @@
 name: worker-luna
 display_name: Worker Luna
 description: Fast, low-cost implementation worker using OpenAI Luna subscription access.
-tools: [read, bash, edit, write, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
+tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: openai-codex/gpt-6-luna

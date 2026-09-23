@@ -2,7 +2,7 @@
 name: worker-glm
 display_name: Worker GLM Flash
 description: Low-cost implementation worker using OpenCode Go GLM-5.3-Flash; accepts text and images. Distinct from analyst-glm, which is the escalation-only GLM-5.3 reviewer.
-tools: [read, bash, edit, write, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
+tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: opencode-go/glm-5.3-flash

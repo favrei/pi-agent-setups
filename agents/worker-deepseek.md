@@ -2,7 +2,7 @@
 name: worker-deepseek
 display_name: Worker DeepSeek
 description: Implementation worker using DeepSeek Flash (default alias for the latest flash); accepts text and images.
-tools: [read, bash, edit, write, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
+tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: deepseek/deepseek-flash

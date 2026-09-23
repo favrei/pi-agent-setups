@@ -2,7 +2,7 @@
 name: analyst-astra
 display_name: Analyst Astra
 description: Elite independent analysis adviser on GPT-6 Astra; use for hard reasoning, high-risk calls, and second opinions inside the OpenAI family.
-tools: [read, bash, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
+tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: openai-codex/gpt-6-astra

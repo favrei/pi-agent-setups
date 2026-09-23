@@ -2,7 +2,7 @@
 name: worker-muse
 display_name: Worker Muse
 description: High-throughput implementation worker using Meta Muse Spark 1.3 Contributor.
-tools: [read, bash, edit, write, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
+tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
 model: meta/muse-spark-1.3-contributor
