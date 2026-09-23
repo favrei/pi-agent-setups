@@ -5,7 +5,7 @@ description: Fast, low-cost implementation worker using OpenAI Luna subscription
 tools: [read, bash, edit, write, grep, find, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
 extensions: true
 skills: true
-model: openai-codex/gpt-5.6-luna
+model: openai-codex/gpt-6-luna
 thinking: max
 max_turns: 256
 include_context_files: true
