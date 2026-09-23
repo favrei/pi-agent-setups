@@ -34,7 +34,7 @@ If you'd rather do it by hand, the mapping is the whole spec:
 agents/            9 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        2 local pi extensions        -> ~/.pi/agent/extensions/
-patches/           1 third-party package fix    -> ~/.pi/agent/patches/  (copied, NOT run)
+patches/           third-party package fixes  -> ~/.pi/agent/patches/  (copied, NOT run)
 config/
   AGENTS.md           copied to ~/.pi/agent/AGENTS.md
   settings.json       MERGED into ~/.pi/agent/settings.json
@@ -118,6 +118,14 @@ python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-transcript-context.py
 ```
 
 It prints the backup path it made, or `already patched`, or refuses with the version it found. Delete the file once upstream ships a release that fixes the bug — the version guard means a stale patch fails loudly rather than quietly mangling a package it no longer matches.
+
+- `pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py` — setup commit `358d036` selected Opus 5.5 before `pi-background-tasks` added it to its explicit Claude Code model-policy list. The result is `Anthropic attribution has no Claude Code model policy for claude-opus-5-5` on the first prompt. This script adds the 5.5 entry using Opus 5's existing 200K subscription/adaptive-effort policy. That compatibility assumption removes the *local policy lookup* error, but cannot guarantee Anthropic accepts the request; report a later HTTP/provider error separately. It guards the package version (2.6.2 or 2.6.3), backs up the JS file, and skips an already-patched file. It does not replace the transcript-context patch above. Run it yourself after install or package updates, then `/reload`:
+
+```bash
+python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py
+```
+
+On Windows, if `python` and `python3` resolve to Microsoft Store aliases rather than installed Python, use `uv run --no-project --python 3.12 <script-path>` (or an explicit Python executable). Do not apply either script to a later package version without reviewing that release first.
 
 ### Sub-agent roles
 

@@ -199,5 +199,6 @@ them, and a stale ID fails when an agent is spawned, not when it is installed.
 | A role fails only when spawned | Model ID renamed or retired. Check against the provider's current list. |
 | `worker-deepseek` fails to spawn | Its model is the floating `deepseek/deepseek-flash` alias, not a fixed build. Check the vendor's current model list and pin a concrete flash ID in `subagents-lite.json`. |
 | A background task on an Anthropic model hangs at 100% CPU and ignores SIGTERM | `pi-background-tasks` 2.6.2 against pi ≥ 0.86. Apply `patches/pi-background-tasks-2.6.2-transcript-context.py`, then `/reload`. Re-apply after every `pi update --extensions`. |
+| `Anthropic attribution has no Claude Code model policy for claude-opus-5-5` | The setup selected Opus 5.5 ahead of `pi-background-tasks` 2.6.2/2.6.3 support. Copy `patches/pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py` (do not run it as part of installation); tell the user how to run it and `/reload`. The patch uses Opus 5's policy as a compatibility assumption and needs reapplying after `pi update --extensions`. |
 | Live JSON will not parse | Back up, report, ask. Never overwrite to clear the error. |
 | Something the user runs is missing after install | Expected. This repo is an overlay and does not ship everything on the machine. |
