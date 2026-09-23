@@ -1,6 +1,8 @@
-# Templates
+# Example structures (not required formats)
 
-## contract.md
+Borrow whatever helps for a given task. Contracts and briefs normally live in the conversation and worker prompt; reports normally come back as subagent results. For long resumable work, use the project's temporary planning area rather than memory.
+
+## Acceptance contract
 
 ```markdown
 # Contract: <task name>
@@ -34,7 +36,7 @@ When the owner comes back, they will see:
 - ...
 ```
 
-## Brief: brief-NN-name.md
+## Worker brief (prompt)
 
 ```markdown
 # Brief NN: <name>
@@ -49,7 +51,7 @@ Must NOT modify: <eval data, metric code, anything else>
 
 ## Context you need
 - <facts, paths, commands>
-- Ruled out already (do not retry): <from ledger>
+- Ruled out already (do not retry): <relevant prior decisions>
 
 ## Done means
 - <deliverable with path>
@@ -60,11 +62,11 @@ Must NOT modify: <eval data, metric code, anything else>
 - Any destructive or irreversible action seems necessary
 ```
 
-For a redirect, add a `## What was wrong` section at the top: what you found, the evidence, and exactly what to change.
+A redirect should say what was wrong and what evidence would resolve it.
 
-## Worker report: report-NN-name.md
+## Worker report (subagent response by default)
 
-The worker must use this format.
+A report may use this structure when it helps:
 
 ```markdown
 # Report NN: <name>

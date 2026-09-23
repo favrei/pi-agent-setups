@@ -19,10 +19,10 @@ The worker runs `scripts/compare_grid.py` (or the project's equivalent) and repo
 python scripts/compare_grid.py \
   --inputs lr=path/to/lr.png bicubic=path/to/bic.png ours=path/to/sr.png ref=path/to/hr.png \
   --crops "120,80,96,96" "400,300,96,96" \
-  --scale 4 --out .agents/memory/inbox/evidence-03-sr-img001
+  --scale 4 --out results/sr/img001
 ```
 
-It writes flat files beside the stem: `evidence-03-sr-img001-grid.png`, `evidence-03-sr-img001-metrics.json` (PSNR and SSIM against `ref` if given), and `evidence-03-sr-img001-hashes.json`.
+It writes files beside that stem: `results/sr/img001-grid.png`, `results/sr/img001-metrics.json` (PSNR and SSIM against `ref` if given), and `results/sr/img001-hashes.json`. Use the project's normal output location; never put grids or metric output in the memory inbox.
 
 ## Rule 3: the manager opens the grids
 

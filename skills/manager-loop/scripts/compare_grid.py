@@ -9,7 +9,7 @@ Usage:
   python compare_grid.py \
     --inputs lr=lr.png bicubic=bic.png ours=sr.png ref=hr.png \
     --crops "120,80,96,96" "400,300,96,96" \
-    --out evidence-03-img001 [--ref ref] [--y-channel] [--border 4] [--cell 256] [--same-threshold 50]
+    --out results/sr/img001 [--ref ref] [--y-channel] [--border 4] [--cell 256] [--same-threshold 50]
 
 Crop coordinates are in the coordinate space of the LARGEST input (normally
 the HR/reference). Smaller inputs (e.g. LR) are nearest-neighbour upscaled to
