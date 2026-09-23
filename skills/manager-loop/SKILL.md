@@ -29,22 +29,23 @@ One manager, one worker. The manager talks to the user, writes the contract, bri
 
 ## State files
 
-Keep all loop state flat in the project's memory inbox (`.agents/memory/inbox/` — the sole writable memory path during ordinary work; `cells/` and `current.md` stay read-only), so any fresh worker or a resumed manager can pick up from it. Do not create a root-level `.manager-loop/` directory — it conflicts with the cell-first memory layout:
+Keep all loop state flat in the project's memory inbox (`.agents/memory/inbox/` — the sole writable memory path during ordinary work; `cells/` and `current.md` stay read-only), so any fresh worker or a resumed manager can pick up from it. Everything lives flat directly in the inbox — no subdirectories, no root-level `.manager-loop/` directory (it conflicts with the cell-first memory layout):
 
 ```
 .agents/memory/inbox/
-├── contract.md     # what the owner wants to see on return (the acceptance contract)
-├── plan.md         # milestones, status, acceptance check per milestone
-├── ledger.md       # decisions made, approaches ruled out and why, open risks
-├── briefs/NN-*.md  # one brief per worker task
-├── reports/NN-*.md # worker's report per task
-├── evidence/NN-*/  # artifacts the manager checked (grids, logs, metric outputs)
+├── contract.md      # what the owner wants to see on return (the acceptance contract)
+├── plan.md          # milestones, status, acceptance check per milestone
+├── ledger.md        # decisions made, approaches ruled out and why, open risks
+├── brief-NN-*.md   # one brief per worker task
+├── report-NN-*.md  # worker's report per task
+├── evidence-NN-*   # artifacts the manager checked (grids, logs, metric outputs)
+├── run-NN.json      # worker run records (headless harness runs)
 └── YYYY-MM-DD-*.md # ordinary staged notes (untouched by the loop)
 ```
 
-`$dream-agent-memory` consolidation ignores the loop control files (`contract.md`, `plan.md`, `ledger.md`, `briefs/`, `reports/`, `evidence/`) — they are working state, not staged notes. Log meaningful progress separately as tiny dated inbox notes (`YYYY-MM-DD-<slug>.md`, one topic per file) per Agent Law; never let dreaming absorb or delete the loop files.
+`$dream-agent-memory` consolidation ignores the loop control files (`contract.md`, `plan.md`, `ledger.md`, `brief-*`, `report-*`, `evidence-*`, `run-*`) — they are working state, not staged notes. Log meaningful progress separately as tiny dated inbox notes (`YYYY-MM-DD-<slug>.md`, one topic per file) per Agent Law; never let dreaming absorb or delete the loop files.
 
-The worker may read `contract.md`, `plan.md` and `ledger.md`. The worker writes only to its own `reports/` file and inside the scope its brief grants.
+The worker may read `contract.md`, `plan.md` and `ledger.md` in the inbox. The worker writes only to its own `report-NN-*.md` file and inside the scope its brief grants.
 
 ## Phase 0 — Contract (with the user, before any work)
 
@@ -76,7 +77,7 @@ brief → worker runs → report → VERIFY → accept | redirect | restart
 
 ### Brief
 
-Write `briefs/NN-name.md` from the template. A good brief is self-contained, because the worker starts fresh. It includes:
+Write `brief-NN-name.md` from the template. A good brief is self-contained, because the worker starts fresh. It includes:
 - the goal and why it matters,
 - the scope (files and dirs it may change),
 - the exact commands or entry points if known,
@@ -116,7 +117,7 @@ Signs of fabrication or corner-cutting include:
 
 ### Decide
 
-- **Accept.** Mark the milestone done in `plan.md`, move the checked artifacts into `evidence/`, record any decision in `ledger.md`, and commit a checkpoint.
+- **Accept.** Mark the milestone done in `plan.md`, rename the checked artifacts flat into the inbox as `evidence-NN-…` files, record any decision in `ledger.md`, and commit a checkpoint.
 - **Redirect** (small, specific fix). Resume the same worker if the harness supports it; otherwise start a fresh one with a delta brief. State exactly what was wrong and what evidence you need.
 - **Restart.** After **2 failed redirects on the same task**, drop the worker. Write the failure mode into `ledger.md` under "ruled out", then brief a fresh worker. Consider splitting the task, since repeated failure usually means the brief was too big or too vague.
 - **Escalate.** Stop and ask the user if a contract criterion looks unachievable, a constraint must be broken, the plan's key assumption failed, or the budget is 70% spent with less than half the milestones done.

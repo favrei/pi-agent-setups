@@ -9,7 +9,7 @@ Usage:
   python compare_grid.py \
     --inputs lr=lr.png bicubic=bic.png ours=sr.png ref=hr.png \
     --crops "120,80,96,96" "400,300,96,96" \
-    --out evidence/03/img001 [--ref ref] [--y-channel] [--border 4] [--cell 256] [--same-threshold 50]
+    --out evidence-03-img001 [--ref ref] [--y-channel] [--border 4] [--cell 256] [--same-threshold 50]
 
 Crop coordinates are in the coordinate space of the LARGEST input (normally
 the HR/reference). Smaller inputs (e.g. LR) are nearest-neighbour upscaled to
@@ -82,7 +82,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--inputs", nargs="+", required=True, help="name=path, in column order")
     ap.add_argument("--crops", nargs="+", required=True, help='"x,y,w,h" in largest-image coordinates')
-    ap.add_argument("--out", required=True, help="output directory")
+    ap.add_argument("--out", required=True, help="output file stem: writes {stem}-grid.png, {stem}-metrics.json, {stem}-hashes.json")
     ap.add_argument("--ref", default=None, help="name of reference input (default: 'ref' or 'hr' if present)")
     ap.add_argument("--y-channel", action="store_true", help="compute metrics on Y channel")
     ap.add_argument("--border", type=int, default=0, help="pixels to crop from each border before metrics")
@@ -112,7 +112,10 @@ def main():
         if x < 0 or y < 0 or x + w > W or y + h > H:
             sys.exit(f"crop {x},{y},{w},{h} outside {W}x{H}")
 
-    os.makedirs(args.out, exist_ok=True)
+    out_stem = args.out
+    parent = os.path.dirname(out_stem)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
 
     # ---- hashes and timestamps ----
     hashes = {}
@@ -193,11 +196,11 @@ def main():
             patch = display[n].crop((x, y, x + w, y + h)).resize((cell, cell), Image.NEAREST)
             grid.paste(patch, (c * cell, top + label_h))
 
-    grid_path = os.path.join(args.out, "grid.png")
+    grid_path = out_stem + "-grid.png"
     grid.save(grid_path)
-    with open(os.path.join(args.out, "metrics.json"), "w") as f:
+    with open(out_stem + "-metrics.json", "w") as f:
         json.dump(metrics, f, indent=2, default=lambda v: None)
-    with open(os.path.join(args.out, "hashes.json"), "w") as f:
+    with open(out_stem + "-hashes.json", "w") as f:
         json.dump(hashes, f, indent=2)
 
     print(f"grid: {grid_path}")

@@ -34,7 +34,7 @@ When the owner comes back, they will see:
 - ...
 ```
 
-## Brief: briefs/NN-name.md
+## Brief: brief-NN-name.md
 
 ```markdown
 # Brief NN: <name>
@@ -62,7 +62,7 @@ Must NOT modify: <eval data, metric code, anything else>
 
 For a redirect, add a `## What was wrong` section at the top: what you found, the evidence, and exactly what to change.
 
-## Worker report: reports/NN-name.md
+## Worker report: report-NN-name.md
 
 The worker must use this format.
 
