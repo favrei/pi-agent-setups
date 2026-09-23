@@ -32,7 +32,7 @@ If you'd rather do it by hand, the mapping is the whole spec:
 
 ```text
 agents/            9 sub-agent role definitions -> ~/.pi/agent/agents/
-skills/            3 portable skills            -> ~/.agents/skills/ (or their existing skills root)
+skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        1 local pi extension         -> ~/.pi/agent/extensions/
 patches/           1 third-party package fix    -> ~/.pi/agent/patches/  (copied, NOT run)
 config/
@@ -159,10 +159,11 @@ Model IDs appear in two places — the `agent` map in `subagents-lite.json` and 
 | Skill | What it does |
 | --- | --- |
 | `economy-team` | Run the session as an analyst that delegates genuinely independent, bounded work to cheaper workers when it benefits — precise briefs, cheap verification, breakpoint audits — while design, visual verdicts, integration, and the foreground itself stay undelegated |
+| `manager-loop` | Run one long or unattended job as manager over exactly one cheap worker — acceptance contract first, one self-contained brief per task, and every worker claim sorted into verified / evidenced / claimed so an unchecked result cannot reach the user |
 | `speak-human` | One-off decode pass over dense machine-written output — coding-agent hand-offs, eval logs, benchmark reports — defining every term and reconstructing the baselines the original skipped |
 | `my-pi-setup` | Resolves explicit my-pi-setup mentions to this repo's upstream for install, sync, publishing, and drift comparison; generic setup talk and ordinary local audits do not trigger it or fetch anything |
 
-All three are about the agent loop itself: how work gets delegated, how its output gets made legible, and how the setup itself is carried between machines. A skill has to earn its place by that standard, not by being useful in general.
+All four are about the agent loop itself: how work gets delegated, how an unattended job is supervised and verified, how its output gets made legible, and how the setup itself is carried between machines. A skill has to earn its place by that standard, not by being useful in general.
 
 **Deliberately not shipped:**
 
