@@ -125,7 +125,13 @@ It prints the backup path it made, or `already patched`, or refuses with the ver
 python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py
 ```
 
-On Windows, if `python` and `python3` resolve to Microsoft Store aliases rather than installed Python, use `uv run --no-project --python 3.12 <script-path>` (or an explicit Python executable). Do not apply either script to a later package version without reviewing that release first.
+- `pi-background-tasks-2.6.2-2.6.3-claude-code-2.1.280.py` — after the Opus 5.5 model-policy fix, Anthropic can reject the request with `claude_code_version_too_old`: the extension still independently reports Claude Code 2.1.251, even if the installed `claude` command says 2.1.280. This patch changes the transport's **version constant and User-Agent together** to 2.1.280; billing fingerprints and the conversation hash derive from the constant. It backs up the file, is idempotent, and only accepts package versions 2.6.2/2.6.3. This clears the known version gate but cannot guarantee the next request has no other incompatibility. Run after the other required patches and `/reload`:
+
+```bash
+python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-2.6.3-claude-code-2.1.280.py
+```
+
+On Windows, if `python` and `python3` resolve to Microsoft Store aliases rather than installed Python, use `uv run --no-project --python 3.12 <script-path>` (or an explicit Python executable). Do not apply these scripts to a later package version without reviewing that release first.
 
 ### Sub-agent roles
 
