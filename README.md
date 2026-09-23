@@ -233,15 +233,9 @@ Everything proposed for this repo passes all three, or it doesn't ship:
 
 Filter 1 is about safety. Filters 2 and 3 are about the repo staying a coherent, droppable unit instead of drifting into a dotfiles dump.
 
-### Skills from other agent CLIs
+### Skills from other agent CLIs (retired)
 
-`extensions/foreign-skills.ts` lets pi discover skills that other agent CLIs keep in their own install locations. They are searched after pi's own roots (project `.pi/skills` and `.agents/skills`, then `~/.pi/agent/skills`, then `~/.agents/skills`), and on a name clash the earlier root wins:
-
-1. Muse Code: `~/.local/share/muse/skills/bundled/muse-core/skills`, shown to Muse models only
-2. Claude Code: `~/.claude/skills`
-3. Codex: `~/.codex/skills`, then `~/.codex/skills/.system` (pi's scan skips dot-directories)
-
-Muse Spark is trained against the skills bundled with the `muse` CLI and loses them under pi. Many of them only make sense inside Muse, so the extension removes them from the system prompt on every turn unless the current model is a Muse model. Switching models mid-session needs no `/reload`. Missing roots are skipped. Some foreign skills fail pi's stricter YAML frontmatter parsing and are skipped with a startup warning.
+`extensions/foreign-skills.ts` is a retired no-op stub. It previously let pi discover skills kept by other agent CLIs (Muse/Codex/Claude), searched after pi's own roots (project `.pi/skills` and `.agents/skills`, then `~/.pi/agent/skills`, then `~/.agents/skills`). Retired 2026-09-23: the Muse bundle produced startup warnings under pi's stricter parsing and proved useless, so pi now loads only its own roots. The stub ships (rather than deleting the file) so sync overwrites and disables the old loader on every machine.
 
 ### Local-only skills
 
