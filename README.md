@@ -33,7 +33,7 @@ If you'd rather do it by hand, the mapping is the whole spec:
 ```text
 agents/            9 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
-extensions/        1 local pi extension         -> ~/.pi/agent/extensions/
+extensions/        2 local pi extensions        -> ~/.pi/agent/extensions/
 patches/           1 third-party package fix    -> ~/.pi/agent/patches/  (copied, NOT run)
 config/
   AGENTS.md           copied to ~/.pi/agent/AGENTS.md
@@ -232,6 +232,16 @@ Everything proposed for this repo passes all three, or it doesn't ship:
 3. **In scope?** Is it about operating an agent or writing code? → if not, it's someone else's repo, however good it is.
 
 Filter 1 is about safety. Filters 2 and 3 are about the repo staying a coherent, droppable unit instead of drifting into a dotfiles dump.
+
+### Skills from other agent CLIs
+
+`extensions/foreign-skills.ts` lets pi discover skills that other agent CLIs keep in their own install locations. They are searched after pi's own roots (project `.pi/skills` and `.agents/skills`, then `~/.pi/agent/skills`, then `~/.agents/skills`), and on a name clash the earlier root wins:
+
+1. Muse Code: `~/.local/share/muse/skills/bundled/muse-core/skills`, shown to Muse models only
+2. Claude Code: `~/.claude/skills`
+3. Codex: `~/.codex/skills`, then `~/.codex/skills/.system` (pi's scan skips dot-directories)
+
+Muse Spark is trained against the skills bundled with the `muse` CLI and loses them under pi. Many of them only make sense inside Muse, so the extension removes them from the system prompt on every turn unless the current model is a Muse model. Switching models mid-session needs no `/reload`. Missing roots are skipped. Some foreign skills fail pi's stricter YAML frontmatter parsing and are skipped with a startup warning.
 
 ### Local-only skills
 
