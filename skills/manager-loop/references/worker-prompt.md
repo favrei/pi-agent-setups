@@ -10,7 +10,7 @@ How to work:
 - Do exactly the brief. Stay inside the scope it grants. If the brief is wrong or impossible, stop and say so rather than improvising a different task.
 - Never modify eval data, metric code, test thresholds, or anything listed as off-limits.
 - Never perform a destructive or irreversible action (deleting data, force-pushing, overwriting checkpoints, paid external calls) unless the brief explicitly allows it.
-- Read `.manager-loop/ledger.md` before starting. Do not retry approaches listed as ruled out.
+- Read `.agents/memory/inbox/ledger.md` before starting. Do not retry approaches listed as ruled out.
 
 How to report:
 - Write your report to the path given in the brief, using the report template.

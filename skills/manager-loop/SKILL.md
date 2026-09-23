@@ -29,17 +29,20 @@ One manager, one worker. The manager talks to the user, writes the contract, bri
 
 ## State files
 
-Keep all state in `.manager-loop/` at the project root, so any fresh worker or a resumed manager can pick up from it:
+Keep all loop state flat in the project's memory inbox (`.agents/memory/inbox/` — the sole writable memory path during ordinary work; `cells/` and `current.md` stay read-only), so any fresh worker or a resumed manager can pick up from it. Do not create a root-level `.manager-loop/` directory — it conflicts with the cell-first memory layout:
 
 ```
-.manager-loop/
+.agents/memory/inbox/
 ├── contract.md     # what the owner wants to see on return (the acceptance contract)
 ├── plan.md         # milestones, status, acceptance check per milestone
 ├── ledger.md       # decisions made, approaches ruled out and why, open risks
 ├── briefs/NN-*.md  # one brief per worker task
 ├── reports/NN-*.md # worker's report per task
-└── evidence/NN-*/  # artifacts the manager checked (grids, logs, metric outputs)
+├── evidence/NN-*/  # artifacts the manager checked (grids, logs, metric outputs)
+└── YYYY-MM-DD-*.md # ordinary staged notes (untouched by the loop)
 ```
+
+`$dream-agent-memory` consolidation ignores the loop control files (`contract.md`, `plan.md`, `ledger.md`, `briefs/`, `reports/`, `evidence/`) — they are working state, not staged notes. Log meaningful progress separately as tiny dated inbox notes (`YYYY-MM-DD-<slug>.md`, one topic per file) per Agent Law; never let dreaming absorb or delete the loop files.
 
 The worker may read `contract.md`, `plan.md` and `ledger.md`. The worker writes only to its own `reports/` file and inside the scope its brief grants.
 

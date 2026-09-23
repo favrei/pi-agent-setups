@@ -21,7 +21,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 <paste references/worker-prompt.md here>
 ```
 
-The manager (main session, stronger model) delegates with a message such as: "Use the worker subagent. Brief: `.manager-loop/briefs/03-train-kd.md`." Each delegation starts with a clean context. If your version supports resuming a subagent, use that for redirects; otherwise re-brief.
+The manager (main session, stronger model) delegates with a message such as: "Use the worker subagent. Brief: `.agents/memory/inbox/briefs/03-train-kd.md`." Each delegation starts with a clean context. If your version supports resuming a subagent, use that for redirects; otherwise re-brief.
 
 Keep subagent output short. Tell the worker to put details in its report file and return only the status plus the report path, so the manager's context doesn't fill up.
 
@@ -30,10 +30,10 @@ Keep subagent output short. Tell the worker to put details in its report file an
 Good for long runs such as training jobs, where the manager checks in periodically:
 
 ```bash
-claude -p "$(cat .manager-loop/worker-prompt.md .manager-loop/briefs/03-train-kd.md)" \
-  --model sonnet --output-format json > .manager-loop/runs/03.json
+claude -p "$(cat .agents/memory/inbox/worker-prompt.md .agents/memory/inbox/briefs/03-train-kd.md)" \
+  --model sonnet --output-format json > .agents/memory/inbox/runs/03.json
 # redirect: resume that session with the delta
-claude -p "$(cat .manager-loop/briefs/03-redirect-1.md)" --resume <session_id> --model sonnet
+claude -p "$(cat .agents/memory/inbox/briefs/03-redirect-1.md)" --resume <session_id> --model sonnet
 ```
 
 ## Pi: subagent (Agent tool)
