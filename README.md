@@ -34,7 +34,6 @@ If you'd rather do it by hand, the mapping is the whole spec:
 agents/            9 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        2 local pi extensions        -> ~/.pi/agent/extensions/
-patches/           third-party package fixes  -> ~/.pi/agent/patches/  (copied, NOT run)
 config/
   AGENTS.md           copied to ~/.pi/agent/AGENTS.md
   settings.json       MERGED into ~/.pi/agent/settings.json
@@ -50,7 +49,7 @@ Note the two distinct roots. `config/` installs into `~/.pi/agent/`; `pi/` insta
 1. **Log in.** Launch pi and authenticate each provider you actually use. Nothing here touches credentials — the skill is explicitly instructed to stop and hand back rather than attempt auth.
 2. **Confirm the model IDs** in `config/subagents-lite.json` still exist. Providers rename and retire models constantly, and a stale ID fails at sub-agent spawn time — not at install time, so the installer cannot catch it for you.
 3. **Re-add private, machine-specific skills** (see [Local-only skills](#local-only-skills)) and, optionally, the third-party skills this repo doesn't vendor.
-4. **Run the local patches.** `patches/` is copied, never executed by the installer. Until you run it, the shipped fix is present as a file and absent as a fix — see [Local patches](#local-patches).
+4. **Align the extensions' pi SDK copy** with your pi version, or Anthropic models fail with `pi_anthropic_attribution_transcript_unsupported` — see [Anthropic transport and the pi SDK copy](#anthropic-transport-and-the-pi-sdk-copy).
 
 ---
 
@@ -105,33 +104,23 @@ This file contains no credentials — only provider names and failure classes �
 
 - `extensions/tool-pair-repair.ts` — repairs Anthropic `tool_use`/`tool_result` pairing at the last gate before the HTTP request. Without it, an interrupted tool call can wedge a session into an unrecoverable `400: tool_use ids were found without tool_result blocks`. Unpublished, self-contained, ~150 lines.
 
-### Local patches
+### Anthropic transport and the pi SDK copy
 
-`patches/` holds fixes for **third-party packages this repo does not own** — code under `~/.pi/agent/npm/node_modules/`, which `pi update --extensions` replaces wholesale. Installing this repo copies the scripts to `~/.pi/agent/patches/`; **it does not run them.** Each is a standalone Python 3 script, safe to re-run, and refuses to touch a version it wasn't written for.
+`pi-background-tasks` ≥ 2.6.5 fixes, officially, everything this repo once patched locally: the pi 0.86 transcript hang ([#27](https://github.com/ismailsaleekh/pi-background-tasks/issues/27), fixed in 2.6.3), the missing Opus 5.5 model policy (2.6.4), and the Claude Code 2.1.280 version gate (2.6.5). The `patches/` directory and its three scripts are retired; delete any leftover copies in `~/.pi/agent/patches/` — their version guards refuse 2.6.5 anyway.
 
-- `pi-background-tasks-2.6.2-transcript-context.py` — pi 0.86 changed what a provider is handed. The context is now a normalized transcript whose `role: "system"` messages carry the system prompt and tool declarations, instead of separate `context.systemPrompt` and `context.tools` fields. `pi-background-tasks` 2.6.2 still assumes the old shape: its Anthropic transport doesn't recognise the new role, falls through into a branch that assumes `toolResult`, and spins there forever — 100% of a core, unresponsive to SIGTERM — and would have dropped the prompt and tools even if it hadn't hung. **Symptom:** a background task routed to an Anthropic model (a `bg_delegate` on Opus, for instance) never starts, pins a CPU, and only dies on SIGKILL. The patch folds the transcript back into the legacy shape and converts that infinite loop into a thrown error, so an unknown role fails loudly instead of hanging. Tracking [`pi-background-tasks` #27](https://github.com/ismailsaleekh/pi-background-tasks/issues/27) (fix PR #28, unmerged at time of writing).
+One install step remains, and it is not a patch. The package's Anthropic gateway imports `@earendil-works/pi-ai` from the shared extensions root, `~/.pi/agent/npm/node_modules/`, not from pi's own install. Other extensions can leave an older copy there (0.83 was observed). Any copy older than 0.86 lacks the `getCurrentSystemPrompt`/`getCurrentTools` exports the fix relies on. Pi ≥ 0.86 hands providers `role: "system"` transcript messages, so every Anthropic request then dies before the network with:
 
-Apply it after install, and again after any `pi update --extensions`, then `/reload`:
-
-```bash
-python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-transcript-context.py
+```text
+pi_anthropic_attribution_transcript_unsupported: system messages require gateway-injected Pi transcript helpers
 ```
 
-It prints the backup path it made, or `already patched`, or refuses with the version it found. Delete the file once upstream ships a release that fixes the bug — the version guard means a stale patch fails loudly rather than quietly mangling a package it no longer matches.
-
-- `pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py` — setup commit `358d036` selected Opus 5.5 before `pi-background-tasks` added it to its explicit Claude Code model-policy list. The result is `Anthropic attribution has no Claude Code model policy for claude-opus-5-5` on the first prompt. This script adds the 5.5 entry using Opus 5's existing 200K subscription/adaptive-effort policy. That compatibility assumption removes the *local policy lookup* error, but cannot guarantee Anthropic accepts the request; report a later HTTP/provider error separately. It guards the package version (2.6.2 or 2.6.3), backs up the JS file, and skips an already-patched file. It does not replace the transcript-context patch above. Run it yourself after install or package updates, then `/reload`:
+Align that copy with the pi you run, then `/reload` or restart pi:
 
 ```bash
-python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-2.6.3-opus-5-5-policy.py
+npm install --prefix ~/.pi/agent/npm --save-exact --legacy-peer-deps --ignore-scripts "@earendil-works/pi-ai@$(pi --version)"
 ```
 
-- `pi-background-tasks-2.6.2-2.6.3-claude-code-2.1.280.py` — after the Opus 5.5 model-policy fix, Anthropic can reject the request with `claude_code_version_too_old`: the extension still independently reports Claude Code 2.1.251, even if the installed `claude` command says 2.1.280. This patch changes the transport's **version constant and User-Agent together** to 2.1.280; billing fingerprints and the conversation hash derive from the constant. It backs up the file, is idempotent, and only accepts package versions 2.6.2/2.6.3. This clears the known version gate but cannot guarantee the next request has no other incompatibility. Run after the other required patches and `/reload`:
-
-```bash
-python3 ~/.pi/agent/patches/pi-background-tasks-2.6.2-2.6.3-claude-code-2.1.280.py
-```
-
-On Windows, if `python` and `python3` resolve to Microsoft Store aliases rather than installed Python, use `uv run --no-project --python 3.12 <script-path>` (or an explicit Python executable). Do not apply these scripts to a later package version without reviewing that release first.
+`--legacy-peer-deps` is needed because some extensions declare narrow `pi-ai` peer ranges; npm will then list them as invalid, which is cosmetic unless that extension actually breaks. Repeat after upgrading pi itself. Verified on pi 0.87.0: Opus answered in the main session once the copy was aligned. Opus launched as a sub-agent was not retested.
 
 ### Sub-agent roles
 
@@ -263,7 +252,7 @@ Private skills live in `~/.agents/skills/` and are simply never copied here. Kee
 - **Model IDs rot.** Providers rename and retire models on short notice. When a role stops spawning, check `subagents-lite.json` against the live model list first — that's almost always the cause. Removing a retired model means editing three places: the model store entry, the `subagents-lite.json` mapping, and any skill prose that names it.
 - **One role follows a floating alias.** `worker-deepseek` targets `deepseek/deepseek-flash`, which resolves to the vendor's current flash release rather than a fixed build, so the role can shift behaviour with no change on your side. It replaced an earlier `-exp` pin. If the alias itself stops resolving, name a concrete flash model ID in `subagents-lite.json`.
 - **Sub-agent extensions and skills are on.** Every role sets `extensions: true` and `skills: true`, so a spawned role starts with the same extension tools and skills as the session. What keeps a role narrow is its `tools:` list, not the extension switch: `pi-ssh/*` and `pi-web-access/*` are granted, while `pi-goal`, `pi-background-tasks`, and `pi-mcp-adapter` are pinned to `/none`. Widen a role there, deliberately, rather than by turning extensions off and on.
-- **Patches don't survive package updates.** `pi update --extensions` reinstalls `node_modules` and silently removes anything in `patches/` that had been applied to it. Re-run the patch scripts after any update — see [Local patches](#local-patches).
+- **Keep the extensions' `pi-ai` copy in step with pi.** After upgrading pi, re-run the alignment command in [Anthropic transport and the pi SDK copy](#anthropic-transport-and-the-pi-sdk-copy). A future third-party fix belongs in `patches/` again (copied, never auto-run), but prefer an upstream release.
 
 ## License
 
