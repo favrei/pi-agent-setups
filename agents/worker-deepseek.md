@@ -6,7 +6,7 @@ tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-g
 extensions: true
 skills: true
 model: deepseek/deepseek-flash
-thinking: max
+thinking: high
 max_turns: 256
 include_context_files: true
 include_system_prompt: true
