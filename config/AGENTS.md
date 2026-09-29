@@ -76,8 +76,9 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   work. "More eyes" alone is not a reason.
 - **Responsive by default.** Sub-agents use `Agent` with
   `run_in_background: true`; long shell calls use `bg_run` with a timeout and
-  `isAgent: false`. Poll artifacts (diffs, timestamps), never status. Kill
-  wrong-direction workers early and re-brief with the loophole closed.
+  `isAgent: false`. At useful breakpoints, inspect the agent's live transcript
+  (below) and work artifacts; do not poll status to wait. Kill wrong-direction
+  workers early and re-brief with the loophole closed.
 - **Delegation is optional, not mandatory.** Delegate when genuinely
   independent, bounded work benefits; small or subtle jobs stay solo. If a
   delegated split would finish later than doing the work solo, do it solo.
@@ -93,10 +94,21 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   thresholds before dispatching; there is no per-call timeout. Non-agent
   `bg_run` shell jobs separately require `timeoutSeconds` because absent means
   no timeout.
-- **No sleeping, no soaking.** Never run `sleep N; echo ready` or any poll loop
-  merely to wait for a delegated task, and never hand the live session itself
-  to a sub-agent. The completion notification is the wake-up path: do
-  independent foreground work if there is any; otherwise end the turn and let
-  the notification wake you. Audit long-running workers at useful breakpoints
-  in your own work, roughly every 5–10 minutes — there is no forced audit
-  timer and no busywork requirement.
+- **Live `Agent` progress is readable.** With `outputTranscript: true` in
+  `~/.pi/agent/subagents-lite.json`, `pi-subagents-lite` writes a live log at
+  `/tmp/pi-agent-outputs/<agent-id>.log`. Use the ID from the `Agent` receipt.
+  At a useful breakpoint, read a **bounded tail once**; for example, in
+  PowerShell: `$id = '<agent ID>'; Get-Content (Join-Path '/tmp/pi-agent-outputs' ($id + '.log')) -Tail 60`.
+  It shows `[THINKING]`, `[TOOL]`, `[TOOL_RESULT]`, and a final `[DONE]`;
+  protect sensitive prompt/log contents. `AgentStatus` reports lifecycle only,
+  not what the worker is doing. Never search all Pi sessions to discover
+  progress or confuse this log with a `bg_run` process log. If transcript
+  output is disabled or the file is missing, fall back to `AgentStatus` and
+  the completion notification; do not assume the log exists in every setup.
+- **No sleeping, no soaking.** Never run `sleep N; echo ready`, a poll loop,
+  or an open-ended `tail -f` merely to wait for a delegated task, and never
+  hand the live session itself to a sub-agent. The completion notification is
+  the wake-up path: do independent foreground work if there is any; otherwise
+  end the turn and let the notification wake you. Audit long-running workers
+  at useful breakpoints, roughly every 5–10 minutes — there is no forced
+  audit timer and no busywork requirement.

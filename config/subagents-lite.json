@@ -11,6 +11,7 @@
     "Explore": "openai-codex/gpt-6-sol",
     "analyst-opus": "anthropic/claude-opus-5-5",
     "analyst-astra": "openai-codex/gpt-6-astra",
+    "analyst-sol": "openai-codex/gpt-6-sol",
     "worker-luna": "openai-codex/gpt-6-luna",
     "worker-muse": "meta/muse-spark-1.3-contributor",
     "worker-deepseek": "deepseek/deepseek-flash",
