@@ -148,6 +148,7 @@ All four accept text and images. That is an input-capability claim only — it d
 | `analyst-glm` | **Text-only** |
 | `analyst-opus` | Cross-family independent review (Anthropic) |
 | `analyst-astra` | Hard reasoning inside the OpenAI family — the expensive one; ships at `thinking: medium` |
+| `analyst-sonnet` | Explicit-pick hands-on partner (Anthropic) — executes a bounded brief under a manager and may edit files; never in the routine worker draw |
 
 `analyst-opus` and `analyst-astra` are the two elite seats, and they are not interchangeable: Opus buys a different model family, Astra buys more depth in the same family as the session model. Pick by which one the disagreement actually needs. Both cost real money — "more eyes" is not a reason to spawn either.
 

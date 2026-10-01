@@ -18,7 +18,8 @@
     "worker-glm": "opencode-go/glm-5.3-flash",
     "analyst-kimi": "opencode-go/kimi-k3",
     "analyst-qwen": "opencode-go/qwen3.8-max",
-    "analyst-glm": "opencode-go/glm-5.3"
+    "analyst-glm": "opencode-go/glm-5.3",
+    "analyst-sonnet": "anthropic/claude-sonnet-5-5"
   },
   "concurrency": {
     "default": 2,
