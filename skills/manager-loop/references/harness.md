@@ -27,15 +27,20 @@ Ask for a concise report in the subagent's final response with paths to evidence
 
 ## Claude Code: headless worker process
 
-If the chosen harness permits a headless worker process, pass the same standing instructions and self-contained brief. Keep process records and large logs in the project's ordinary run/output area or external scratch, not the memory inbox. Use the harness's own resume mechanism if available. In Pi, do **not** shell-spawn a second agent: use the `Agent` tool instead.
+If the chosen harness permits a headless worker process, pass the same standing instructions and self-contained brief. Keep process records and large logs in the project's ordinary run/output area or external scratch, not the memory inbox. Use the harness's own resume mechanism if available. In Pi, do **not** shell-spawn a second agent: use the `subagent` tool instead.
 
-## Pi: subagent (Agent tool)
+## Pi: subagent (`pi-subagents` `subagent` tool)
 
-Spawn the worker with the `Agent` tool: pick the worker role (e.g. `worker-luna` for cheap execution), and pass `references/worker-prompt.md` plus the self-contained brief as the prompt. Use `run_in_background: true` for asynchronous work, and accept the terminal subagent result as its report. Each spawn starts with a clean context.
+Spawn the worker with `subagent({ agent: "<worker role>", task: "<prompt>" })`: pick the worker role from the global random draw (e.g. `worker-luna`), and pass `references/worker-prompt.md` plus the self-contained brief as the task. It runs in the background by default and notifies the manager natively on completion; accept that terminal result as its report. Keep the run ID from the launch receipt.
 
-Resume is **not supported** — verified by test: a worker told to memorize a code word, then "resumed" by a second spawn whose prompt never contained the word, reported no memory of the session. The `Agent` tool takes no session handle (`agent` / `prompt` / `run_in_background` / `worktree_path` only), so redirects and restarts are always a fresh worker with the original brief plus the "What was wrong" delta. Keep briefs self-contained and include relevant decisions (especially ruled-out approaches) in every delta brief, since the new worker inherits nothing.
+Resume **is supported** with the same run ID:
+- **Watch:** `subagent({ action: "status", id, view: "transcript", lines: 80 })` — one bounded tail per breakpoint.
+- **Redirect while running:** `subagent({ action: "steer", id, message })`.
+- **Pause and inspect:** `subagent({ action: "interrupt", id })`, wait for status `paused`, inspect the artifacts, then continue.
+- **Redirect after a report (or after a pause/failure):** `subagent({ action: "resume", id, message: "<What was wrong delta>" })`. The worker keeps its conversation, model, and tools, so send only the delta. Each resume may return a new run ID; continue from the latest.
+- **Restart:** `subagent({ action: "stop", id })` (terminal, not resumable), then a fresh worker with the original brief plus the delta and any ruled-out approaches.
 
-For long unattended jobs, continue on the completion notification instead of polling. The worker returns a terminal report, but the manager still verifies its claims against the referenced artifacts.
+Count the worker against the provider concurrency caps in `~/.pi/agent/AGENTS.md` before launching; a paused worker still holds its slot. For long unattended jobs, continue on the completion notification instead of polling. The manager still verifies the worker's claims against the referenced artifacts.
 
 ## Raw API
 
@@ -43,4 +48,4 @@ Keep one `messages` list per worker session. For a new task, create a new list. 
 
 ## Other vendors' CLIs as worker
 
-Where permitted by the host harness, pass the same prompt plus brief and collect the returned report. Keep large process logs outside memory. The verification rules don't change with the vendor; Pi sessions use `Agent`, not shell-spawned agent CLIs.
+Where permitted by the host harness, pass the same prompt plus brief and collect the returned report. Keep large process logs outside memory. The verification rules don't change with the vendor; Pi sessions use `subagent`, not shell-spawned agent CLIs.

@@ -28,5 +28,5 @@ Keep code, deliverables, figures, evidence, run records, and large logs in their
 Read only what the task needs:
 - `references/worker-prompt.md` — short worker instructions to adapt in the brief.
 - `references/templates.md` — examples of contract, brief, and report structures; none requires a file or exact format.
-- `references/harness.md` — harness-specific worker spawning; in Pi use `Agent`, not a shell-spawned agent.
+- `references/harness.md` — harness-specific worker spawning and resume; in Pi use the `subagent` tool (steer, interrupt, resume the same worker), not a shell-spawned agent.
 - `references/visual-research.md` and `scripts/compare_grid.py` — visual comparisons when relevant.

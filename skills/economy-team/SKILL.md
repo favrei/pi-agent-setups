@@ -98,9 +98,9 @@ written.
 A background process and a sub-agent are not two interchangeable ways to express
 the same job. Keep one owner and one result channel:
 
-- Spawn implementation and review workers only with `Agent`; for asynchronous
-  work, set `run_in_background: true` on that call. The parent receives the
-  real `subagent-result` and lifecycle events.
+- Spawn implementation and review workers only with the `subagent` tool
+  (`subagent({ agent, task })`); children run in the background by default and
+  the parent receives the native completion notification and run lifecycle.
 - Use `bg_run` only for non-agent shell processes: tests, builds, servers,
   training, watchers. In this setup it always has `isAgent: false` and needs an
   explicit `timeoutSeconds`.
@@ -123,27 +123,42 @@ the same job. Keep one owner and one result channel:
   the cheapest signal that would actually fail: run the check yourself, inspect
   `git diff`, read the changed hunks. Reading is cheap; accepting is expensive.
 - Every delegate wakes the foreground on completion and is bounded by a
-  timeout. `Agent` + `run_in_background: true` wakes via `subagent-result`;
-  the only timeout is the session watchdog (`toolTimeoutMinutes` /
-  `idleTimeoutMinutes` — verify before dispatch; there is no per-call
-  timeout). `bg_delegate` wakes by default with `timeoutSeconds` defaulting to
+  timeout. `subagent` background runs notify natively; the global config sets
+  a 2-hour run deadline (with a checkpoint steer 5 minutes before it) and a
+  45-minute per-tool-call limit. Pass a shorter per-call `timeoutMs` for small
+  briefs. `bg_delegate` wakes by default with `timeoutSeconds` defaulting to
   1200.
 - Audit a long-running worker at useful breakpoints in your own work, roughly
-  every 5–10 minutes. An audit is three questions: touching only the named
-  files? forward progress toward VERIFY? output shape matches the spec?
-  Off-track → kill and re-brief.
+  every 5–10 minutes, by reading one bounded transcript tail:
+  `subagent({ action: "status", id, view: "transcript", lines: 80 })`. An
+  audit is three questions: touching only the named files? forward progress
+  toward VERIFY? output shape matches the spec?
+- Act on the audit through the same run, not a new one: `steer` a drifting
+  worker; `interrupt` it when you need to inspect before it continues, then
+  `resume` it with a diff-sized correction. Sending corrections to the same
+  worker keeps its warm context, so prefer `resume` over a fresh re-brief. Use
+  `stop` (terminal) and a fresh worker only when the direction is wrong enough
+  that its context is a liability.
 - Never sleep or poll merely to wait for a delegated task; the completion
   notification is the wake-up path. If you have no useful independent work,
   end the turn and let the notification wake you — no forced busywork and no
   mandatory audit timer.
 
-## Roster
+## Roster and concurrency caps
 
 Per-worker modality, availability, provider concurrency, worker rotation, and
 escalation/analyst names are owned by the global policy
 (`~/.pi/agent/AGENTS.md`); that file wins over anything here. Filter
 capability and availability before choosing a worker, and spread deliberately
 parallel lanes across providers.
+
+The subagent tool does **not** enforce provider limits, so this skill does.
+Before every launch, count this session's active runs on the target provider
+with `subagent({ action: "status" })` and respect the caps table in
+`~/.pi/agent/AGENTS.md` (`opencode-go`: 1, `openai-codex`: 2, `anthropic`: 2,
+`deepseek`: 4, `meta`: 6; at most 4 active background sub-agents overall).
+Paused workers still hold their slot. At a cap, wait for a completion or
+re-draw onto another provider — never exceed it to go faster.
 
 ## Anti-patterns
 
@@ -154,7 +169,8 @@ parallel lanes across providers.
 - **Trusting worker eyes.** See the trust rule above.
 - **Parallel workers on one file set.** Silent clobbering, expensive untangling.
 - **Cheaper but slower.** Token savings do not buy back the user's time.
-- **Shell-spawned pseudo-agent** via `bash`/`bg_run` instead of `Agent`.
+- **Shell-spawned pseudo-agent** via `bash`/`bg_run` instead of `subagent`.
+- **Cap overrun** — launching past a provider cap because the tool allowed it.
 - **Sleep-to-wait** — bare `sleep N; echo ready` or any poll loop while a
   delegate runs; the completion notification is the wake.
 - **Foreground merge or hand-off** — folding the live session into a

@@ -29,18 +29,51 @@
 - `opencode-go` provider concurrency is 1, so `worker-glm` and any
   `analyst-glm` / `analyst-kimi` / `analyst-qwen` contend for the same slot.
   Do not plan a parallel lane that needs two `opencode-go` agents at once.
+
+## Concurrency Caps (policy-enforced)
+
+`pi-subagents` has no per-provider scheduler, so these caps are enforced by
+you, not by the tool. They bind in both `economy-team` and Elite Team Mode.
+
+| Provider | Roles | Max active sub-agents |
+|---|---|---|
+| `opencode-go` | `worker-glm`, `analyst-glm`, `analyst-kimi`, `analyst-qwen` | **1** |
+| `openai-codex` | `worker-luna`, `analyst-astra`, built-ins (`scout`, `reviewer`, `oracle`, `delegate`, …) | 2 |
+| `anthropic` | `analyst-opus`, `analyst-sonnet` | 2 |
+| `deepseek` | `worker-deepseek` | 4 |
+| `meta` | `worker-muse` | 6 |
+
+- Before every launch, count this session's active runs for that provider with
+  `subagent({ action: "status" })`. Queued, running, paused, and
+  needs-attention runs all occupy a slot; a paused (interrupted) worker you
+  intend to resume still holds its slot.
+- At the cap, wait for a completion notification or pick a worker on another
+  provider. Never exceed a cap to save wall-clock time.
+- Keep at most 4 active background sub-agents per session overall unless the
+  user asks for a wider fan-out.
+- A provider rate-limit or concurrency error from a child means a cap was
+  wrong or exceeded: stop launching on that provider and report it.
 - Provider availability, concurrency, task-specific suitability, independent
   review diversity, or an explicit user choice may override the random draw.
   If the selected worker is unavailable, use another eligible worker.
+- Built-in `pi-subagents` roles run on `openai-codex/gpt-6.1-sol` (low
+  thinking): `scout` for read-only recon (formerly `Explore`), `delegate` for
+  a parent-like general helper (formerly `general-purpose`), plus `reviewer`,
+  `oracle`, `researcher`, `evidence-auditor`. The generic built-in `worker` is
+  disabled; implementation always goes through the random draw above.
 
 ## One Scheduler Per Job
 
 Background execution and sub-agent delegation are separate mechanisms. Never
 stack them to create a second agent path.
 
-- Use the `Agent` tool for implementation or review sub-agents. When it should
-  run asynchronously, set `run_in_background: true` on that same `Agent` call so
-  its terminal result returns through the sub-agent protocol.
+- Use the `subagent` tool (`pi-subagents`) for implementation or review
+  sub-agents: `subagent({ agent: "worker-luna", task: "<brief>" })`. Children
+  run in the background by default and notify the parent natively on
+  completion; do not pass `async: false` for named roles (foreground children
+  lose ambient extensions such as `pi-ssh` and web access).
+- Never use the external-CLI runner agents (`claude-code*`, `codex-exec*`,
+  `cursor-agent*`); they are disabled and would be shell-spawned agents.
 - Use `bg_delegate` only for its intended inspect-only, context-seeded
   investigation, then retrieve the verified result with `bg_result`.
 - Use Fusion tools only for their named fixed-purpose workflows.
@@ -74,11 +107,14 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   opinion, `analyst-qwen` / `analyst-kimi` for cross-family diversity. Name the
   disagreement in the brief. `analyst-glm` is text-only and never gets visual
   work. "More eyes" alone is not a reason.
-- **Responsive by default.** Sub-agents use `Agent` with
-  `run_in_background: true`; long shell calls use `bg_run` with a timeout and
-  `isAgent: false`. At useful breakpoints, inspect the agent's live transcript
-  (below) and work artifacts; do not poll status to wait. Kill wrong-direction
-  workers early and re-brief with the loophole closed.
+- **Caps still bind.** Quality-over-quota does not lift the Concurrency Caps
+  above: `opencode-go` stays at 1 and every launch is counted first.
+- **Responsive by default.** Sub-agents use `subagent` (background by
+  default); long shell calls use `bg_run` with a timeout and `isAgent: false`.
+  At useful breakpoints, inspect the worker's live transcript (below) and work
+  artifacts; do not poll status to wait. Correct a drifting worker with
+  `steer`; stop a wrong-direction worker early and re-brief with the loophole
+  closed.
 - **Delegation is optional, not mandatory.** Delegate when genuinely
   independent, bounded work benefits; small or subtle jobs stay solo. If a
   delegated split would finish later than doing the work solo, do it solo.
@@ -88,23 +124,26 @@ quota savings. The `economy-team` skill still applies, with these overrides:
 - **Delegation contract: end notification + timeout.** Every sub-agent or
   delegate must wake the foreground on completion and be bounded by a timeout.
   For `bg_delegate`, wake defaults are on and `timeoutSeconds` defaults to 1200.
-  For `Agent` + `run_in_background: true`, the wake is built in
-  (`subagent-result` + `triggerTurn`), but the only timeout is the session
-  watchdog (`toolTimeoutMinutes` / `idleTimeoutMinutes`) — confirm those
-  thresholds before dispatching; there is no per-call timeout. Non-agent
+  For `subagent` background runs, the completion notification is native, and
+  `~/.pi/agent/extensions/subagent/config.json` sets the bounds: a 2-hour
+  run deadline (`timeoutMs`) with a checkpoint-and-stop steer 5 minutes
+  before it, and a 45-minute hard limit per tool call (`toolTimeoutMs`).
+  Pass a shorter per-call `timeoutMs` when the brief is small. Non-agent
   `bg_run` shell jobs separately require `timeoutSeconds` because absent means
   no timeout.
-- **Live `Agent` progress is readable.** With `outputTranscript: true` in
-  `~/.pi/agent/subagents-lite.json`, `pi-subagents-lite` writes a live log at
-  `/tmp/pi-agent-outputs/<agent-id>.log`. Use the ID from the `Agent` receipt.
-  At a useful breakpoint, read a **bounded tail once**; for example, in
-  PowerShell: `$id = '<agent ID>'; Get-Content (Join-Path '/tmp/pi-agent-outputs' ($id + '.log')) -Tail 60`.
-  It shows `[THINKING]`, `[TOOL]`, `[TOOL_RESULT]`, and a final `[DONE]`;
-  protect sensitive prompt/log contents. `AgentStatus` reports lifecycle only,
-  not what the worker is doing. Never search all Pi sessions to discover
-  progress or confuse this log with a `bg_run` process log. If transcript
-  output is disabled or the file is missing, fall back to `AgentStatus` and
-  the completion notification; do not assume the log exists in every setup.
+- **Supervise through the tool, not the filesystem.** Use the run ID from the
+  launch receipt:
+  - read progress: `subagent({ action: "status", id, view: "transcript", lines: 80 })`
+    — a **bounded tail once** per breakpoint (max 500 lines);
+  - correct a running worker: `subagent({ action: "steer", id, message })`;
+  - pause to inspect: `subagent({ action: "interrupt", id })`, then check
+    status until it reports paused;
+  - continue the same conversation (paused, completed, or failed):
+    `subagent({ action: "resume", id, message })` — it keeps the worker's
+    context, model, and tools; prefer it over a fresh re-brief for redirects;
+  - end for good: `subagent({ action: "stop", id })` (not resumable).
+  Never search all Pi sessions to discover progress or confuse a transcript
+  with a `bg_run` process log; protect sensitive prompt/log contents.
 - **No sleeping, no soaking.** Never run `sleep N; echo ready`, a poll loop,
   or an open-ended `tail -f` merely to wait for a delegated task, and never
   hand the live session itself to a sub-agent. The completion notification is

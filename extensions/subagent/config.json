@@ -1,0 +1,6 @@
+{
+  "toolActivation": "eager",
+  "timeoutMs": 7200000,
+  "checkpointBeforeDeadlineMs": 300000,
+  "toolTimeoutMs": 2700000
+}

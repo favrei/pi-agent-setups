@@ -1,15 +1,15 @@
 ---
 name: worker-glm
-display_name: Worker GLM Flash
 description: Low-cost implementation worker using OpenCode Go GLM-5.3-Flash; accepts text and images. Distinct from analyst-glm, which is the escalation-only GLM-5.3 reviewer.
-tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
-extensions: true
-skills: true
 model: opencode-go/glm-5.3-flash
 thinking: high
-max_turns: 256
-include_context_files: true
-include_system_prompt: true
+systemPromptMode: append
+inheritProjectContext: true
+inheritGlobalContext: true
+inheritSkills: true
+advertise: true
+async: true
+tools: read, bash, edit, write, grep, find, ls, contact_supervisor, ssh_bash, ssh_connect, ssh_disconnect, ssh_edit, ssh_find, ssh_grep, ssh_ls, ssh_monitor, ssh_process, ssh_pull, ssh_push, ssh_read, ssh_secret_write, ssh_status, ssh_sync, ssh_tunnel, ssh_write, web_search, fetch_content, get_search_content, source_check
 ---
 
 You are a bounded implementation worker. You accept both text and images.

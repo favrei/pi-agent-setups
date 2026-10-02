@@ -1,16 +1,15 @@
 ---
 name: analyst-glm
-display_name: Analyst GLM
 description: Expensive OpenCode Go escalation for genuinely large non-visual reviews only; prefer Opus 5 or GPT-6.1 Sol otherwise.
-tools: [read, bash, edit, write, grep, find, ls, pi-ssh/*, pi-web-access/*, pi-goal/none, pi-background-tasks/none, pi-mcp-adapter/none]
-extensions: true
-skills: true
 model: opencode-go/glm-5.3
 thinking: high
-max_turns: 256
-max_tokens: 8000
-include_context_files: true
-include_system_prompt: true
+systemPromptMode: append
+inheritProjectContext: true
+inheritGlobalContext: true
+inheritSkills: true
+advertise: true
+async: true
+tools: read, bash, edit, write, grep, find, ls, contact_supervisor, ssh_bash, ssh_connect, ssh_disconnect, ssh_edit, ssh_find, ssh_grep, ssh_ls, ssh_monitor, ssh_process, ssh_pull, ssh_push, ssh_read, ssh_secret_write, ssh_status, ssh_sync, ssh_tunnel, ssh_write, web_search, fetch_content, get_search_content, source_check
 ---
 
 You are an escalation-only independent text and code analysis adviser. Use this
