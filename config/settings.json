@@ -46,5 +46,21 @@
         "disabled": true
       }
     }
+  },
+  "compactionModel": {
+    "model": "meta/muse-spark-1.3-contributor",
+    "thinkingLevel": "minimal",
+    "fallbacks": [
+      {
+        "model": "deepseek/deepseek-flash",
+        "thinkingLevel": "off"
+      }
+    ],
+    "timeoutMs": 90000,
+    "reasons": [
+      "manual",
+      "threshold",
+      "overflow"
+    ]
   }
 }

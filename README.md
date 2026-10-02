@@ -33,7 +33,8 @@ If you'd rather do it by hand, the mapping is the whole spec:
 ```text
 agents/            10 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
-extensions/        2 local pi extensions        -> ~/.pi/agent/extensions/
+extensions/        local pi extensions          -> ~/.pi/agent/extensions/
+  compaction-model/     ordered compaction fallback -> ~/.pi/agent/extensions/compaction-model/
   subagent/config.json  pi-subagents runtime config -> ~/.pi/agent/extensions/subagent/config.json
 patches/           third-party package fixes    -> ~/.pi/agent/patches/ (copied, never auto-run)
 config/
@@ -102,8 +103,9 @@ This file contains no credentials — only provider names and failure classes �
 
 `pi-codex-search` is the second, independent Codex search path. It registers its own `codex_search` tool rather than replacing `web_search`, so the two coexist: `web_search` gives you the routed multi-provider chain with the curator UI, `codex_search` goes straight to the Codex Responses API and can batch up to 32 queries in one call. Both reuse the same `openai-codex` OAuth credential, so neither needs an API key. Its optional `codex_standalone_web` tool (open/find/click/screenshot) is off unless enabled. Config, if you want to change defaults, is `~/.pi/pi-codex-search.json` — the same `~/.pi/` root as `web-search.json`, not `~/.pi/agent/`. Nothing is shipped here, since the defaults are fine.
 
-### Local extension
+### Local extensions
 
+- `extensions/compaction-model/` — dedicated native compaction using **Muse minimal → direct DeepSeek off → active coding model**. A vendored MIT fork of JMHSV's `pi-compaction-model`, with ordered, bounded attempts and cumulative file metadata restoration. `config/settings.json` ships the portable chain; no stock npm compaction package is required. Covers `/compact`, automatic threshold, and overflow where extensions are loaded, without changing coding models or context windows. Extension-denying/isolated launchers keep native compaction. Reload after sync; providers still need their own login, and this is not coding-provider failover. Source, 41 tests, configuration and limits: [extension README](extensions/compaction-model/README.md).
 - `extensions/tool-pair-repair.ts` — repairs Anthropic `tool_use`/`tool_result` pairing at the last gate before the HTTP request. Without it, an interrupted tool call can wedge a session into an unrecoverable `400: tool_use ids were found without tool_result blocks`. Unpublished, self-contained, ~150 lines.
 
 ### Anthropic transport and the pi SDK copy
