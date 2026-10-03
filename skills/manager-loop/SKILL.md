@@ -15,7 +15,7 @@ One manager, one worker at a time. The worker does the task; the manager decides
 - Decide whether to accept, redirect, try a fresh worker, or escalate to the user. Use judgment rather than a fixed number of retries or a mandatory milestone ritual. Do not let a worker quietly change evaluation criteria or take destructive, irreversible, or costly actions without authorization.
 - Tell the user what is verified, what remains uncertain, and where the results are. An honest partial result is better than an unsupported success claim.
 
-The manager can do verification and small fixes directly. Use a worker when handing off execution helps; do not delegate judgment about acceptance.
+The manager can do verification and small fixes directly. Use a worker when handing off execution helps; do not delegate judgment about acceptance. In Pi, launch every delegated subtask through the `subagent` plugin, including read-only investigation. Use the background plugin only for non-agent processes such as tests/builds, with `isAgent: false`. Native async subagents need no background wrapper; do not use `bg_delegate` or combine the two launch paths.
 
 ## Work and memory
 

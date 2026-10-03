@@ -96,6 +96,38 @@ shared root. When it is genuinely ambiguous, ask.
 Installing the same skill into both roots is a bug — it produces two copies that
 drift apart.
 
+### Keep installed plugin instructions consistent
+
+The central policy in `config/AGENTS.md` separates the launch paths: delegated
+agent subtasks use `pi-subagents`; non-agent background processes use the
+background plugin. Native async subagents do not need a background wrapper.
+A plugin's generic prompt text must not reintroduce a `bg_delegate` exception.
+
+After an install or sync, compare the installed plugin instruction text with
+that policy. For `pi-background-tasks`, align the `bg_run` description,
+`isAgent` field description, prompt snippet, and prompt guidelines to say
+non-agent processes only, always `isAgent: false`, no agent-launching shell
+commands or background-wrapped `subagent`. Align `bg_delegate` description,
+snippet, and launch guidance to say not to use it here, even for read-only or
+context-seeded work; use native `subagent` instead. These strings live in
+`src/extension.ts`, `src/delegate-extension.ts`, and the corresponding shipped
+`dist/src/*.js` files in current releases. Update both copies if present, but
+only instruction strings: do not change executable logic, tool registration,
+schemas, defaults, or settings to enforce this rule. Compare and back up first.
+
+Keep the installed `pi-subagents` skill's async guidance consistent: its native
+async execution is not a background-plugin task, and `bg_delegate` is not an
+alternative. Put a local-policy notice in existing background tool docs when
+needed; leave generated API regions untouched. Do not create new guards,
+extensions, policy files, patch scripts, or vendor a `node_modules` tree for
+this instruction repair. If the expected instruction surface is absent or its
+layout changed, report that gap instead of claiming it was repaired.
+
+Package updates can overwrite these local instruction edits. Recheck them on
+the next setup sync after an update; reload/restart Pi to load changed plugin
+prompt text. This is instruction alignment, not a runtime prohibition or proof
+that every running session has loaded the correction.
+
 ## Invariants
 
 These hold for every request, whatever it is.

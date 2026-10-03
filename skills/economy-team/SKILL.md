@@ -95,12 +95,13 @@ written.
 
 ## One scheduler per job
 
-A background process and a sub-agent are not two interchangeable ways to express
-the same job. Keep one owner and one result channel:
+Need a delegated subtask -> use the subagent plugin. Need a background
+process -> use the background plugin. Do not combine the two launch paths:
 
-- Spawn implementation and review workers only with the `subagent` tool
-  (`subagent({ agent, task })`); children run in the background by default and
-  the parent receives the native completion notification and run lifecycle.
+- Spawn every delegated agent, including read-only investigators and reviewers,
+  only with `subagent({ agent, task })`. Its native async execution and
+  completion notification belong to the subagent plugin, not the background
+  plugin. Never wrap it in `bg_run`, `/bg`, or a shell script.
 - Use `bg_run` only for non-agent shell processes: tests, builds, servers,
   training, watchers. In this setup it always has `isAgent: false` and needs an
   explicit `timeoutSeconds`.
@@ -108,12 +109,12 @@ the same job. Keep one owner and one result channel:
   json`, another LLM CLI/API, or a wrapper that launches one. That is a
   shell-spawned pseudo-agent: the parent receives a process log instead of the
   real sub-agent result and lifecycle.
-- Use `bg_delegate` only for inspect-only, context-seeded investigation, and
-  retrieve its verified answer with `bg_result`. It does not replace an
-  implementation worker.
-- Use Fusion only for its named fixed-purpose workflows. Use
-  `bg_run_pi_attested` only when the user explicitly asks for an attested Pi
-  run; it is evidence production, not a delegation fallback.
+- Do not use `bg_delegate`, even for inspect-only or context-seeded work.
+  Use a read-only `subagent` with a self-contained brief or supported fork
+  context instead. Read-only scope is not an exception to plugin separation.
+- Fusion and `bg_run_pi_attested` require an explicit request for that named
+  workflow or attested evidence run. Neither is a launcher or fallback for
+  ordinary delegated subtasks.
 - The foreground is never delegated, merged, or backgrounded into any
   sub-agent. Workers spawn from it; it is never handed off.
 
@@ -122,12 +123,11 @@ the same job. Keep one owner and one result channel:
 - A worker saying "done, all tests pass" is a claim, not evidence. Confirm with
   the cheapest signal that would actually fail: run the check yourself, inspect
   `git diff`, read the changed hunks. Reading is cheap; accepting is expensive.
-- Every delegate wakes the foreground on completion and is bounded by a
-  timeout. `subagent` background runs notify natively; the global config sets
-  a 2-hour run deadline (with a checkpoint steer 5 minutes before it) and a
-  45-minute per-tool-call limit. Pass a shorter per-call `timeoutMs` for small
-  briefs. `bg_delegate` wakes by default with `timeoutSeconds` defaulting to
-  1200.
+- Every subagent wakes the foreground on completion and is bounded by a
+  timeout. Its native async runs notify without the background plugin; the
+  global config sets a 2-hour run deadline (with a checkpoint steer 5 minutes
+  before it) and a 45-minute per-tool-call limit. Pass a shorter per-call
+  `timeoutMs` for small briefs.
 - Audit a long-running worker at useful breakpoints in your own work, roughly
   every 5–10 minutes, by reading one bounded transcript tail:
   `subagent({ action: "status", id, view: "transcript", lines: 80 })`. An
@@ -169,7 +169,8 @@ re-draw onto another provider — never exceed it to go faster.
 - **Trusting worker eyes.** See the trust rule above.
 - **Parallel workers on one file set.** Silent clobbering, expensive untangling.
 - **Cheaper but slower.** Token savings do not buy back the user's time.
-- **Shell-spawned pseudo-agent** via `bash`/`bg_run` instead of `subagent`.
+- **Combined launch paths** — `bg_delegate`, background-wrapped `subagent`,
+  or shell-spawned agents via `bash`/`bg_run` instead of native `subagent`.
 - **Cap overrun** — launching past a provider cap because the tool allowed it.
 - **Sleep-to-wait** — bare `sleep N; echo ready` or any poll loop while a
   delegate runs; the completion notification is the wake.

@@ -31,7 +31,7 @@ If the chosen harness permits a headless worker process, pass the same standing 
 
 ## Pi: subagent (`pi-subagents` `subagent` tool)
 
-Spawn the worker with `subagent({ agent: "<worker role>", task: "<prompt>" })`: pick the worker role from the global random draw (e.g. `worker-luna`), and pass `references/worker-prompt.md` plus the self-contained brief as the task. It runs in the background by default and notifies the manager natively on completion; accept that terminal result as its report. Keep the run ID from the launch receipt.
+Spawn the worker with `subagent({ agent: "<worker role>", task: "<prompt>" })`: pick the worker role from the global random draw (e.g. `worker-luna`), and pass `references/worker-prompt.md` plus the self-contained brief as the task. Its default async execution belongs to the subagent plugin and notifies the manager natively on completion; accept that terminal result as its report. Keep the run ID from the launch receipt. Do not use `bg_delegate` or wrap this launch in `bg_run`/`/bg`; the background plugin is for non-agent processes, not workers or read-only investigators.
 
 Resume **is supported** with the same run ID:
 - **Watch:** `subagent({ action: "status", id, view: "transcript", lines: 80 })` — one bounded tail per breakpoint.

@@ -3,6 +3,16 @@
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
+  "defaultTools": [
+    "read",
+    "bash",
+    "powershell",
+    "edit",
+    "write",
+    "grep",
+    "find",
+    "ls"
+  ],
   "enabledModels": [
     "openai-codex/gpt-6.1-sol:xhigh",
     "openai-codex/gpt-6-astra:xhigh",
@@ -20,6 +30,10 @@
     "npm:pi-mcp-adapter",
     "git:github.com/favrei/pi-ssh"
   ],
+  "extensions": [
+    "-builtin:mcp"
+  ],
+  "tuiMode": "regular",
   "subagents": {
     "defaultModel": "openai-codex/gpt-6.1-sol",
     "defaultThinking": "low",

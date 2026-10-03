@@ -64,28 +64,34 @@ you, not by the tool. They bind in both `economy-team` and Elite Team Mode.
 
 ## One Scheduler Per Job
 
-Background execution and sub-agent delegation are separate mechanisms. Never
-stack them to create a second agent path.
+Need a delegated subtask -> use the `subagent` plugin. Need a background
+process -> use the background plugin. Do not combine the two launch paths.
+The subagent plugin's native async execution is not a background-plugin task.
 
-- Use the `subagent` tool (`pi-subagents`) for implementation or review
-  sub-agents: `subagent({ agent: "worker-luna", task: "<brief>" })`. Children
-  run in the background by default and notify the parent natively on
+- Use the `subagent` tool (`pi-subagents`) for every delegated agent subtask,
+  including read-only investigation, research, implementation, and review:
+  `subagent({ agent: "worker-luna", task: "<brief>" })`. Children run in native
+  async mode by default and notify the parent natively on
   completion; do not pass `async: false` for named roles (foreground children
   lose ambient extensions such as `pi-ssh` and web access).
 - Never use the external-CLI runner agents (`claude-code*`, `codex-exec*`,
   `cursor-agent*`); they are disabled and would be shell-spawned agents.
-- Use `bg_delegate` only for its intended inspect-only, context-seeded
-  investigation, then retrieve the verified result with `bg_result`.
-- Use Fusion tools only for their named fixed-purpose workflows.
+- Do not use `bg_delegate`, even for inspect-only or context-seeded work.
+  Read-only agents are still subagents; use `subagent` with a self-contained
+  brief or its supported fork context. Do not wrap a `subagent` call or an
+  agent-launching script in `bg_run`, `/bg`, or another background task.
+- Fusion is only for an explicitly requested named Fusion workflow, never an
+  alternative launcher for a delegated subtask.
 - Use `bg_run` only for non-agent shell processes such as tests, builds, servers,
   training jobs, and audit timers. In this setup, always set `isAgent: false`.
 - Never launch `pi -p`, `pi --print`, `pi --mode json`, another LLM CLI/API, or
   a wrapper script that launches one through `bash` or `bg_run`. That is a
   shell-spawned pseudo-agent: the parent receives a process log instead of the
   real sub-agent result and lifecycle.
-- `bg_run_pi_attested` is the sole exception, and only when the user explicitly
-  requests an attested evidence-producing Pi run. It is not a delegation
-  fallback.
+- `bg_run_pi_attested` is only for an explicitly requested attested evidence
+  run, never a delegated subtask or a fallback. Tool availability, generic
+  plugin guidance, and a desire to run asynchronously do not override this
+  separation.
 
 ## Elite Team Mode (user present)
 
@@ -121,10 +127,9 @@ quota savings. The `economy-team` skill still applies, with these overrides:
   Workers may implement and run focused tests and debugging within their
   briefed scope; design, high-risk decisions, visual verdicts, and integration
   stay with the foreground.
-- **Delegation contract: end notification + timeout.** Every sub-agent or
-  delegate must wake the foreground on completion and be bounded by a timeout.
-  For `bg_delegate`, wake defaults are on and `timeoutSeconds` defaults to 1200.
-  For `subagent` background runs, the completion notification is native, and
+- **Delegation contract: end notification + timeout.** Every subagent must
+  wake the foreground on completion and be bounded by a timeout.
+  For `subagent` native async runs, the completion notification is native, and
   `~/.pi/agent/extensions/subagent/config.json` sets the bounds: a 2-hour
   run deadline (`timeoutMs`) with a checkpoint-and-stop steer 5 minutes
   before it, and a 45-minute hard limit per tool call (`toolTimeoutMs`).

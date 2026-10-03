@@ -31,7 +31,7 @@ What it guarantees, whatever you ask: it compares before writing and skips ident
 If you'd rather do it by hand, the mapping is the whole spec:
 
 ```text
-agents/            10 sub-agent role definitions -> ~/.pi/agent/agents/
+agents/            11 sub-agent role definitions -> ~/.pi/agent/agents/
 skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        local pi extensions          -> ~/.pi/agent/extensions/
   compaction-model/     ordered compaction fallback -> ~/.pi/agent/extensions/compaction-model/
@@ -67,7 +67,7 @@ Declared in `settings.json` under `packages[]`. All but one are published to the
 | `pi-meta-oauth` | `blockedredemption` | Meta Model API OAuth provider + Muse video/audio/file analysis tools |
 | `@narumitw/pi-goal` | `narumitw` | Actively maintained autonomous goals with guarded continuation, explicit completion/blocker/wait states, and safety limits |
 | `pi-subagents` | `nicobailon` | Sub-agents with per-role models through the `subagent` tool — the parent can read a worker's transcript, steer it, pause it, and resume the same conversation |
-| `pi-background-tasks` | `ismailsaleekh` | `bg_run`, `bg_delegate`, attested Pi runs, and the `fusion_*` multi-model workflows |
+| `pi-background-tasks` | `ismailsaleekh` | Non-agent background processes through `bg_run`; special-purpose attested/Fusion workflows only on explicit request. Its registered `bg_delegate` is not used by this setup |
 | `pi-claude-auth` | `pankajudhas81` | Reuses existing Claude Code credentials — no separate login |
 | `pi-web-access` | `nicobailon` | `web_search`, `fetch_content`, GitHub/PDF/YouTube handling — routed Codex-first, see [Search routing](#search-routing) |
 | `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
@@ -152,6 +152,7 @@ All four accept text and images. That is an input-capability claim only — it d
 | `analyst-glm` | **Text-only** |
 | `analyst-opus` | Cross-family independent review (Anthropic) |
 | `analyst-astra` | Hard reasoning inside the OpenAI family — the expensive one; ships at `thinking: medium` |
+| `analyst-sol` | Independent GPT-6.1 Sol review adviser; investigates without editing and returns evidence to the parent |
 | `analyst-sonnet` | Explicit-pick hands-on partner (Anthropic) — executes a bounded brief under a manager and may edit files; never in the routine worker draw |
 
 `analyst-opus` and `analyst-astra` are the two elite seats, and they are not interchangeable: Opus buys a different model family, Astra buys more depth in the same family as the session model. Pick by which one the disagreement actually needs. Both cost real money — "more eyes" is not a reason to spawn either.
@@ -236,6 +237,18 @@ than invented tool parameters. Delegation there is optional and benefit-based,
 and every delegated task must have a completion wake-up and bounded timeout.
 The `economy-team` skill still governs routine bulk-output delegation underneath
 those interactive-session overrides.
+
+The launch paths stay separate: **delegated subtask -> `subagent` plugin;
+non-agent background process -> background plugin**. This includes read-only
+investigation. Native async subagents need no background wrapper; do not use
+`bg_delegate`, shell-spawn agents through `bg_run`, or wrap `subagent` in `/bg`.
+
+The setup-sync skill also reconciles installed plugin instruction text with
+this policy, including both source and shipped prompt strings where present.
+This changes instructions only, not runtime behavior, tool schemas, or feature
+settings. Installed npm packages are not vendored here; a package update can
+restore conflicting generic guidance. Re-run setup sync after updates and
+reload/restart Pi to load the corrected instruction text.
 
 ---
 
