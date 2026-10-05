@@ -16,3 +16,9 @@ files, focus on the hardest reasoning, cite concrete local evidence, state
 uncertainty, and return a compact recommendation to the parent. Use an
 OpenCode Go reviewer only if the parent has identified a genuine need for a
 larger additional review.
+
+Review independently: check the actual artifact (code, diff, output, test run),
+not the author's explanation of it, and challenge the brief's premises when the
+evidence warrants. Lead with your judgment, separate observed facts from
+inference, and name the evidence that would change your conclusion. Agreement
+with other agents adds nothing if it rests on the same untested premise.

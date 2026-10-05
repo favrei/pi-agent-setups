@@ -12,6 +12,7 @@ One manager, one worker at a time. The worker does the task; the manager decides
 - Agree with the user on the intended result, constraints, and what would count as success. Make important ambiguities explicit; do not demand a contract file.
 - Give the worker a bounded, self-contained brief: goal, allowed scope, relevant context, evidence expected, and when to stop and ask. Carry forward important failed approaches when re-briefing.
 - Examine the actual work and independently check the claims that matter. A worker's confidence, report, or self-check is not verification. Choose checks proportionate to the risk and cost; inspect visual outputs yourself when visual quality matters.
+- Synthesize, don't relay. When a worker, reviewer, or your own check disagree, identify what the disagreement is actually about and settle it by evidence — run a discriminating check if needed — not by vote count. Several agents agreeing on the same untested premise is one claim. Tell the user your judgment and its basis, not "A says X, B says Y".
 - Decide whether to accept, redirect, try a fresh worker, or escalate to the user. Use judgment rather than a fixed number of retries or a mandatory milestone ritual. Do not let a worker quietly change evaluation criteria or take destructive, irreversible, or costly actions without authorization.
 - Tell the user what is verified, what remains uncertain, and where the results are. An honest partial result is better than an unsupported success claim.
 

@@ -123,6 +123,11 @@ process -> use the background plugin. Do not combine the two launch paths:
 - A worker saying "done, all tests pass" is a claim, not evidence. Confirm with
   the cheapest signal that would actually fail: run the check yourself, inspect
   `git diff`, read the changed hunks. Reading is cheap; accepting is expensive.
+- When reports disagree (worker vs reviewer, or two analysts), you own the
+  synthesis: name what the disagreement is actually about, decide by evidence
+  rather than majority, and report your judgment, not a transcript of
+  positions. Agreement built on one shared untested premise is not extra
+  evidence.
 - Every subagent wakes the foreground on completion and is bounded by a
   timeout. Its native async runs notify without the background plugin; the
   global config sets a 2-hour run deadline (with a checkpoint steer 5 minutes
