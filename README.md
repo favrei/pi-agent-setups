@@ -73,6 +73,7 @@ Declared in `settings.json` under `packages[]`. All but one are published to the
 | `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
 | `pi-mcp-adapter` | `nicobailon` | MCP gateway (`mcp`) and batch scripting (`mcpScript`) |
 | `pi-ssh` | `favrei` fork of `HCAHOI` (GitHub) | `ssh_*` tools and `/ssh` — read, edit, grep, and run commands on an already-authorized remote over one reused connection; `ssh_process` for long jobs, `ssh_push`/`ssh_pull`, `ssh_tunnel`, `ssh_secret_write` |
+| `@injaneity/pi-computer-use` | `injaneity` | Desktop UI observation and control (`find_roots`, `observe_ui`, `act_ui`, …) on macOS, Windows, and Linux through platform accessibility APIs. macOS needs Accessibility and Screen Recording permission for its helper; Linux needs an AT-SPI2 session |
 
 All MIT except `pi-background-tasks` (ISC). None are first-party to pi itself — this is a community stack.
 

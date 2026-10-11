@@ -28,7 +28,8 @@
     "npm:pi-web-access",
     "npm:pi-codex-search",
     "npm:pi-mcp-adapter",
-    "git:github.com/favrei/pi-ssh"
+    "git:github.com/favrei/pi-ssh",
+    "npm:@injaneity/pi-computer-use"
   ],
   "extensions": [
     "-builtin:mcp"
