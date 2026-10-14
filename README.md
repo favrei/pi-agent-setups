@@ -32,7 +32,7 @@ If you'd rather do it by hand, the mapping is the whole spec:
 
 ```text
 agents/            11 sub-agent role definitions -> ~/.pi/agent/agents/
-skills/            4 portable skills            -> ~/.agents/skills/ (or their existing skills root)
+skills/            5 portable skills            -> ~/.agents/skills/ (or their existing skills root)
 extensions/        local pi extensions          -> ~/.pi/agent/extensions/
   compaction-model/     ordered compaction fallback -> ~/.pi/agent/extensions/compaction-model/
   subagent/config.json  pi-subagents runtime config -> ~/.pi/agent/extensions/subagent/config.json
@@ -200,10 +200,11 @@ then quit and relaunch pi — `/reload` keeps the old module in memory. The scri
 | --- | --- |
 | `economy-team` | Run the session as an analyst that delegates genuinely independent, bounded work to cheaper workers when it benefits — precise briefs, cheap verification, breakpoint audits — while design, visual verdicts, integration, and the foreground itself stay undelegated |
 | `manager-loop` | Run one long or unattended job as manager over exactly one cheap worker — acceptance contract first, one self-contained brief per task, and every worker claim sorted into verified / evidenced / claimed so an unchecked result cannot reach the user |
-| `speak-human` | One-off decode pass over dense machine-written output — coding-agent hand-offs, eval logs, benchmark reports — defining every term and reconstructing the baselines the original skipped |
+| `speak-human` | Evidence-led conversational replies: lead with the best-supported assessment, then its basis and practical meaning; also decodes dense machine-written output — hand-offs, eval logs, benchmark reports — by defining terms and reconstructing the baselines the original skipped |
+| `write-clear-documents` | The document-side counterpart to `speak-human`: plan, draft, and revise designs, evaluation reports, proposals, and handoffs around the reader's takeaway, keeping facts, interpretations, and proposals distinguishable and conditions beside the claims they limit |
 | `my-pi-setup` | Resolves explicit my-pi-setup mentions to this repo's upstream for install, sync, publishing, and drift comparison; generic setup talk and ordinary local audits do not trigger it or fetch anything |
 
-All four are about the agent loop itself: how work gets delegated, how an unattended job is supervised and verified, how its output gets made legible, and how the setup itself is carried between machines. A skill has to earn its place by that standard, not by being useful in general.
+All five are about the agent loop itself: how work gets delegated, how an unattended job is supervised and verified, how its output — replies and documents — gets made legible, and how the setup itself is carried between machines. A skill has to earn its place by that standard, not by being useful in general.
 
 **Deliberately not shipped:**
 

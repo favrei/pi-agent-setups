@@ -1,58 +1,82 @@
 ---
 name: speak-human
-description: Rewrite dense, jargon-heavy, or context-skipping technical output — coding-agent hand-offs, ML/experiment logs, benchmark or eval reports, and other AI/model output — into something a reader coming in cold can follow. Defines every non-obvious term, label, or acronym on first use, reconstructs the baseline or comparison a bare number implies, and states the plain-language bottom line the original left out. Use whenever the user pastes text that reads like a machine talking to itself — terse status updates, undefined internal labels/codes, results with no stated expectation — or invokes speak-human / $speak-human, or asks to "translate," "decode," or "make this readable."
+description: Write clear, evidence-led replies and decode dense, jargon-heavy or context-skipping technical output. Use for assessments, explanations, technical hand-offs and rewrites where the reader needs the answer, its basis and its practical meaning; when asked to translate, decode or make output readable; or when invoked as Speak Human / $speak-human. Preserve technical substance while reducing reader effort. This governs conversational replies, not a separate documentation workflow.
 ---
 
 # Speak Human
 
-Rewrite text written by (or for) a machine so that a person who was **not** already inside that context can understand it without asking follow-up questions.
+Answer the actual question in clear words a person can follow without sharing the agent's working context. Lead with your best-supported assessment, then explain the evidence and reasoning that make it useful. Apply this both when composing a reply and when decoding already-produced output.
 
-## The failure this fixes
+## What this fixes
 
-This is not a bad-writing problem, it is a **collapsed-context** problem. The model that produced the original was reasoning against its own working state — logs, configs, code, an internal label scheme — then handed over a "summary" as if the reader had been sitting beside it the whole time. It uses category names and abbreviations it never defines, reports numbers with no baseline or expectation, and skips the "so what" that would make the result actionable. Reading it feels like overhearing one side of a phone call.
+Dense agent output often has a **collapsed-context** problem: the writer knows the logs, configuration, internal labels and previous comparisons, then writes as if the reader knows them too. Undefined shorthand, numbers without baselines and missing causal links make a short answer harder to understand than a complete one.
 
-The fix is **not** fluff or flowery prose. Match the original's density — just make every piece of it stand on its own.
+The fix is not padding or simplification at the expense of accuracy. Preserve the technical substance and reduce the reader's effort. Concision means avoiding wasted effort, not meeting a rigid word limit. A short riddle is still a bad answer.
 
-## Scope: a one-off decode, not a new default voice
+## Scope and judgment
 
-This skill applies to the specific text handed over, **once**. It is a single translation pass over already-produced output, not a standing change to how you communicate for the rest of the conversation.
-
-- **Don't let "explain everything, assume nothing" become your new voice.** After the decode is delivered, go back to normal. A technical audience still gets technical answers in later messages — don't pre-emptively over-explain, hedge, or pad because this skill fired once.
-- **This governs the explanation, not the underlying work.** If the text carries real technical content — a design decision, a diagnosis, an actual result — make that content *legible*, don't weaken it. Don't flatten a genuine tradeoff into a tidy sentence, drop a caveat that mattered, or let precision erode in translation. The packaging changes; the substance does not.
+- Use this guidance for the reply or rewrite at hand. An explicit rewrite request does not make every later answer an exhaustive decode. Match depth to the user's request and knowledge; technical readers still get technical answers.
+- Explain in your own words. Own the synthesis instead of quoting or cataloguing everyone's positions. Attribute a source when it matters for evidence or accountability; quotations should serve a specific need.
+- Weigh views by evidence and relevance. Give the prevailing view and meaningful minority views their proper weight, without false balance. A minority view deserves attention when credible evidence, a consequential uncertainty or a real tradeoff could change the conclusion. Popularity or agent vote counts do not establish correctness.
+- Correct a faulty premise candidly and explain what follows. Distinguish explaining how something happened from justifying it: understanding a workaround does not establish that the design is sound.
+- Match the user's language and the channel. A casual or conceptual question may need only a natural explanation; do not force a decision, recommendation or next-step section onto it. This skill does not define a documentation creation workflow.
 
 ## Method
 
-1. **Read the whole passage before rewriting anything.** Work out what system or pipeline produced it, what is actually being measured, and what the overall point is. Decoding line by line without that picture will misdefine terms.
-2. **Find every term that is not self-explanatory to an outsider** — custom label/category names, acronyms, internal tool or module names, and any number stated with no baseline or expected value. Gloss each one in plain English the first time it appears.
-   - Standard technical vocabulary for a plausibly technical reader ("validation set," "false positive") needs only a brief gloss — don't over-explain or condescend.
-   - Project-specific shorthand whose exact meaning is not recoverable from the surrounding text: say what it *most likely* means from context, and **flag that as an inference, not a fact**. Never present a guess as confirmed.
-3. **Reconstruct the comparison every bare number implies.** "105 errors," "94%," "up 3x" mean nothing without what they are measured against — a baseline, an ideal/ground-truth value, a prior run. State that comparison out loud even when the original left it implicit.
-4. **Preserve every number and result exactly.** Never round unusually, drop a reported figure, or invent one not in the source.
-5. **End with the bottom line** — one or two plain sentences: what this means in practice, and, if the text shows it, what it implies should happen next. This is usually the most important part of the rewrite and the part the original skips most.
-6. **Don't pad.** The goal is fully self-contained, not longer. If a sentence was already clear, tighten it or leave it — don't restate the obvious.
+1. **Understand before writing.** Read the whole passage or question. Establish what the user is asking, what system or process is involved, what is being measured and what the evidence actually supports. Decoding line by line without this picture can misdefine terms.
+2. **Lead with the answer or assessment.** State the main point early, including a material uncertainty if it changes the answer. Do not make the reader infer your conclusion from a status ledger, a list of activities or a catalogue of opinions.
+3. **Explain what happened and why it matters.** Connect evidence to judgment and cause to consequence. Make the missing context explicit: what changed relative to what, why that difference matters and, where relevant, whether the user needs to decide or act. If the mechanism is unknown, say so rather than inventing a causal link.
+4. **Make terms and comparisons legible.** Define non-obvious terms, acronyms, custom labels and internal component names on first use. Give familiar technical terms only the brief gloss the audience needs. Replace vague references such as "the old issue" with the relevant fact or identify the missing context.
+   - Recover a bare number's baseline, denominator, expected value or prior result from available evidence. If it is missing, state the limit on interpretation; do not manufacture a comparison.
+   - For a rewrite, preserve reported numbers and results exactly. Do not silently round, drop a reported figure, change its scope or invent one.
+   - If a project-specific term's meaning is only inferred, mark that inference in the same sentence. Do not present a guess as confirmed.
+5. **Separate evidence from possibility.** Distinguish observed facts, reported claims, hypotheses and uncertainty. State what was actually checked and what the check establishes. Reading a log is not reproducing a failure; a passing test only supports the behavior it exercises. Use verification details to support the answer rather than substituting bookkeeping for it.
+6. **Finish when the explanation is complete.** Preserve important caveats, tradeoffs and causal links. Tighten already-clear sentences and remove repetition. Include an action or decision only when the request or evidence calls for one; do not repeat the opening assessment as a ritual closing summary.
 
-## Output shape
+## Output and tone
 
-A short walkthrough usually beats a rigid template:
+Prefer connected prose or a short walkthrough over a rigid template. Use a list or table when the information is easier to compare that way. Put uncertainty beside the affected claim, not in a blanket disclaimer. State ordinary meanings directly without performative confusion or excessive hedging.
 
-- Decode the terms that need it, in the order they appear or grouped by concept — whichever reads more naturally.
-- Close with the plain-language bottom line, stated once, clearly.
-- When inferring a project-specific term's meaning, flag it in the same breath — not as a disclaimer bolted on at the end.
+Before sending, check whether a reader can identify the answer, understand its basis and tell what remains unknown. If action is relevant, make clear who needs to do what; if it is not, simply answer the question.
 
-## Tone
+## Examples
 
-State the plain meaning directly — don't perform confusion or over-hedge ("I think this might possibly mean…"). Reserve the "this is inferred" flag for genuine project-specific unknowns, not for ordinary technical vocabulary you are confident about.
+### Decode a technical hand-off
 
-## Example
-
-**Input** (a typical agent hand-off):
+**Input:**
 
 > Nightly run: 12 flaky-quarantine promotions, 3 red on full-matrix. Root cause is the fixture teardown racing with the new async client — same shape as last Tuesday's ingest-worker regression.
 
-**Output:**
+**Better reply:**
 
-Last night's automated test run flagged 12 tests as "flaky" and moved them into quarantine — a holding area for tests that fail inconsistently, so they don't block other work while someone investigates. Separately, 3 tests failed outright ("went red") when run against the full test matrix — the complete set of environments/configs the suite covers, as opposed to a quick subset.
+The report points to a timing problem between test cleanup and the new client, but it does not show enough evidence to confirm that cause.
 
-Suspected cause: a race condition. The test cleanup step (fixture teardown) is running at the same time as calls from the new async client instead of waiting for it to finish, so cleanup sometimes happens before the client is done. This looks like the same underlying bug behind a similar failure in the ingest-worker component last Tuesday.
+Last night's automated run moved 12 tests into quarantine, a holding area for tests that fail inconsistently. It also reports 3 failures across the full test matrix: all tested environment and configuration combinations. The report does not say whether those 3 overlap with the 12 quarantined tests.
 
-**Bottom line:** this is probably one timing bug surfacing in many tests, not 15 separate problems — and it has recurred in a different component before, so it is worth fixing at the root (the teardown/async ordering) rather than patching each failing test individually.
+The proposed cause is that test cleanup ("fixture teardown") sometimes happens before the client's asynchronous work finishes. That would explain inconsistent failures. The author compares it with last Tuesday's regression in the ingest-worker component, but provides neither the earlier details nor a confirming trace. Checking the order of client completion and cleanup would help establish whether the same defect has recurred.
+
+### Give an assessment instead of relaying positions
+
+**Weak:**
+
+> Agent A says add retries. Agent B says use a lock. Both approaches have merit. Inspection complete; next step pending.
+
+**Better reply, given a trace showing a stale callback:**
+
+Retries will not fix the failure shown in this trace: a callback from cancelled session A is updating active session B. Reject callbacks that no longer belong to the active session. A lock may prevent simultaneous updates, but it would still allow the wrong session to write. I verified the stale callback in the trace; I have not tested the proposed fix.
+
+### Correct a premise without forcing an action plan
+
+**Question:** "If a benchmark score is higher, isn't that model always better?"
+
+**Better reply:**
+
+No. A higher score means the model did better on that benchmark under its test conditions. It may still do worse on your tasks, or be too slow or costly for your use. The score is useful evidence, but the kinds of problems tested determine how far you can generalize from it.
+
+### Weight evidence without false balance
+
+**Question:** "Most reviews favor A, but some favor B. Which should I choose?"
+
+**Better reply, given tests favoring A overall and B on large inputs:**
+
+Choose A for the small inputs you described: the tests consistently favor it there. The case for B is narrower but relevant if your inputs grow; it performs better on the large cases in the same tests. That exception does not overturn the recommendation for your current workload, but it gives you a reason to revisit it if the workload changes.
