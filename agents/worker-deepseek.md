@@ -2,7 +2,7 @@
 name: worker-deepseek
 description: Implementation worker using DeepSeek Flash (default alias for the latest flash); accepts text and images.
 model: deepseek/deepseek-flash
-thinking: high
+thinking: low
 systemPromptMode: append
 inheritProjectContext: true
 inheritGlobalContext: true

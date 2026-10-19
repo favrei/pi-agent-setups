@@ -2,7 +2,7 @@
 name: worker-muse
 description: High-throughput implementation worker using Meta Muse Spark 1.3 Contributor.
 model: meta/muse-spark-1.3-contributor
-thinking: high
+thinking: low
 systemPromptMode: append
 inheritProjectContext: true
 inheritGlobalContext: true
