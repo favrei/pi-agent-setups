@@ -1,7 +1,7 @@
 ---
 name: analyst-sol
 description: Independent review adviser using GPT-6.1 Sol. Use for second opinions, high-risk calls, and independent review inside the OpenAI family; mirrors the Opus setup.
-model: openai-codex/gpt-6.1-sol
+model: openai/gpt-6.1-sol
 thinking: high
 systemPromptMode: append
 inheritProjectContext: true

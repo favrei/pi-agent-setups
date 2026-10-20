@@ -73,9 +73,9 @@ Declared in `settings.json` under `packages[]`. All but one are published to the
 | `pi-codex-search` | `133cha31` | `codex_search` — web search through an existing ChatGPT Plus/Pro Codex subscription |
 | `pi-mcp-adapter` | `nicobailon` | MCP gateway (`mcp`) and batch scripting (`mcpScript`) |
 | `pi-ssh` | `favrei` fork of `HCAHOI` (GitHub) | `ssh_*` tools and `/ssh` — read, edit, grep, and run commands on an already-authorized remote over one reused connection; `ssh_process` for long jobs, `ssh_push`/`ssh_pull`, `ssh_tunnel`, `ssh_secret_write` |
-| `@injaneity/pi-computer-use` | `injaneity` | Desktop UI observation and control (`find_roots`, `observe_ui`, `act_ui`, …) on macOS, Windows, and Linux through platform accessibility APIs. macOS needs Accessibility and Screen Recording permission for its helper; Linux needs an AT-SPI2 session |
+| `@amaster.ai/pi-computer-use` | `amaster.ai` | Desktop UI observation and control (`computer_use_get_window_state`, click/type/scroll, …) on macOS, Windows, and Linux via bundled Cua Driver 0.35.4 (60 tools, `core` profile by default; browser/recording/session/cursor/window/clipboard/diagnostics groups on demand via `computer_use_tools`) |
 
-All MIT except `pi-background-tasks` (ISC). None are first-party to pi itself — this is a community stack.
+All MIT except `pi-background-tasks` (ISC) and `@amaster.ai/pi-computer-use` (Apache-2.0; bundled Cua Driver MIT). None are first-party to pi itself — this is a community stack.
 
 **Package versions are unpinned by design.** Every npm entry in `packages[]` is a bare name, so a fresh install takes the current release and an existing one is free to move. The earlier pins were snapshots of whatever happened to be installed the day they were written, and they rotted — `pi-meta-oauth` sat at `0.3.0` while upstream shipped `0.4.4`, which is a stale auth extension rather than a conservative one. Reproducibility here is not worth a standing manual upgrade chore across machines. If you need a build frozen, pin it locally in `~/.pi/agent/settings.json`; that stays out of this repo.
 

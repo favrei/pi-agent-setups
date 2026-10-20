@@ -1,7 +1,7 @@
 ---
 name: worker-luna
 description: Fast, low-cost implementation worker using OpenAI Luna subscription access.
-model: openai-codex/gpt-6-luna
+model: openai/gpt-6-luna
 thinking: high
 systemPromptMode: append
 inheritProjectContext: true

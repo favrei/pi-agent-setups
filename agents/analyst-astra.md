@@ -1,7 +1,7 @@
 ---
 name: analyst-astra
 description: Elite independent analysis adviser on GPT-6 Astra; use for hard reasoning, high-risk calls, and second opinions inside the OpenAI family.
-model: openai-codex/gpt-6-astra
+model: openai/gpt-6-astra
 thinking: medium
 systemPromptMode: append
 inheritProjectContext: true
