@@ -182,13 +182,7 @@ Resume keeps the worker's conversation, model, and tools, so a redirect costs a 
 
 **Built-in roles.** `settings.json` puts the package's built-ins (`scout`, `reviewer`, `oracle`, `delegate`, `researcher`, `evidence-auditor`) on `openai-codex/gpt-6.1-sol` at low thinking, and disables the generic built-in `worker` (implementation goes through the random worker draw) and the external-CLI runners (`claude-code*`, `codex-exec*`, `cursor-agent*`), which would be shell-spawned agents.
 
-**Pi 1.0.0 patch.** `pi-subagents` 0.74.0 cannot start background children on pi 1.0.0: it requires `@earendil-works/pi-agent-core/node`, which pi 1.0.0 no longer ships. Upstream fixed it in [PR #2634](https://github.com/nicobailon/pi-subagents/pull/2634), not yet released. Until then:
-
-```bash
-python3 ~/.pi/agent/patches/pi-subagents-0.74.0-pi-1.0-agent-core-node.py
-```
-
-then quit and relaunch pi — `/reload` keeps the old module in memory. The script backs up the file, is idempotent, and refuses any version but 0.74.0. `pi update --extensions` reverts it; once a release with #2634 is installed, delete the script.
+**Pi 1.0.0 patch (retired).** `pi-subagents` 0.74.0 could not start background children on pi 1.0.0 (missing `@earendil-works/pi-agent-core/node`). Upstream fixed it in [PR #2634](https://github.com/nicobailon/pi-subagents/pull/2634); current releases include the fix, so the local patch script is gone. Run `pi update --extensions` if an old 0.74.0 is still installed, and delete any leftover `~/.pi/agent/patches/pi-subagents-0.74.0-*.py`.
 
 **Not carried over from `pi-subagents-lite`:** per-role turn limits and output-token caps have no equivalent, and the transcript view tails at most 500 lines.
 
